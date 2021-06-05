@@ -68,7 +68,7 @@ INSERT INTO BeatmapMirror.sets (
 `
 
 var CheckDownloadable = `SELECT download_disabled FROM osu.beatmap_set WHERE id = ?`
-var GetDownloadBeatmapData = `SELECT beatmapset_id as id,artist,title,last_updated from BeatmapMirror.sets where beatmapset_id = ?`
+var GetDownloadBeatmapData = `select CAST(set_id AS CHAR(10)) as id, artist, title, DATE_FORMAT(set_last_updated, "%Y-%m-%d %H:%i:%s") as last_update from BeatmapMirror.beatmaps where set_id = ? limit 1;`
 
 var SearchBeatmaps = `
 select * from

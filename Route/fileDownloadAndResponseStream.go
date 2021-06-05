@@ -38,20 +38,24 @@ func CheckServerType(c echo.Context) (err error) {
 		fmt.Println(err.Error())
 		return
 	}
-
 	switch rqdata.Server {
 	case 0:
+		fmt.Println("[R]", "Request Redirect to Loadbalance Downloader", rqdata.Beatmapsetid)
 		return LoadBalanceDownload(c, rqdata.Beatmapsetid)
 	case 1:
+		fmt.Println("[R]", "Request Redirect to Main Server", rqdata.Beatmapsetid)
 		return DownloadBeatmapSet(c, rqdata.Beatmapsetid)
 	case 2:
+		fmt.Println("[R]", "Request Redirect to thftServer", rqdata.Beatmapsetid)
 		return RedirectThftgrServer(c, rqdata.Beatmapsetid)
 	default:
+		fmt.Println("[R]", "Request Redirect to Main Server", rqdata.Beatmapsetid)
 		return DownloadBeatmapSet(c, rqdata.Beatmapsetid)
 	}
 }
 
 func LoadBalanceDownload(c echo.Context, mid int) (err error) {
+	fmt.Println("[R]", "loadbalancer Count:", Global.LoadBalance)
 	switch Global.LoadBalance {
 	case 0:
 		Global.LoadBalance = Global.LoadBalance + 1
@@ -76,17 +80,26 @@ func DownloadBeatmapSet(c echo.Context, mid int) (err error) {
 		return c.String(500, "ErrorCode: 1-1")
 	}
 	defer rows.Close()
-	if !rows.Next() {
-		return c.String(404, "please wait some second and try again or later")
-	}
+
+	// if !rows.Next() {
+	// 	// fmt.Println(err.Error())
+	// 	return c.String(404, "please wait some second and try again or later")
+	// }
 	var a struct {
 		Id          string
 		Artist      string
 		Title       string
 		LastUpdated string
 	}
-	if err = rows.Scan(&a.Id, &a.Artist, &a.Title, &a.LastUpdated); err != nil {
-		return c.String(500, "ErrorCode: 1-2")
+	for rows.Next() {
+		if err := rows.Scan(&a.Id, &a.Artist, &a.Title, &a.LastUpdated); err != nil {
+			fmt.Println(err.Error())
+			return c.String(500, "ErrorCode: 1-2")
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return c.String(500, "ErrorCode: 1-3")
 	}
 
 	fileName := a.Id + " " + a.Artist + " - " + a.Title + ".osz"
@@ -95,7 +108,7 @@ func DownloadBeatmapSet(c echo.Context, mid int) (err error) {
 		lu, err := time.Parse("2006-01-02T15:04:05", a.LastUpdated)
 		if err != nil {
 			fmt.Println(err)
-			return c.String(500, "ErrorCode: 1-3-1")
+			return c.String(500, "ErrorCode: 1-4-1")
 		}
 		if src.FileList[mid].Unix() >= lu.Unix() { // 맵이 최신인경우
 			return c.Attachment(serverFileName+".osz", fileName)
@@ -104,7 +117,7 @@ func DownloadBeatmapSet(c echo.Context, mid int) (err error) {
 		lu, err := time.Parse("2006-01-02 15:04:05", a.LastUpdated)
 		if err != nil {
 			fmt.Println(err)
-			return c.String(500, "ErrorCode: 1-3-2")
+			return c.String(500, "ErrorCode: 1-4-2")
 		}
 		if src.FileList[mid].Unix() >= lu.Unix() { // 맵이 최신인경우
 			return c.Attachment(serverFileName+".osz", fileName)
@@ -115,7 +128,7 @@ func DownloadBeatmapSet(c echo.Context, mid int) (err error) {
 	//=        비트맵 파일이 서버에 없는경우        =
 	//==========================================
 	if Settings.Config.Logger.DownloadBeatmap {
-		fmt.Println("[d] " + stringId + "file does not exist on the server, download start")
+		fmt.Println("[d] " + stringId + " file does not exist on the server, download start")
 	}
 	url := "https://osu.ppy.sh/api/v2/beatmapsets/" + stringId + "/download"
 	client := &http.Client{}
