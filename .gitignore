@@ -10,3 +10,6 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+*.osz
+config.json
+osu-beatmap-mirror-api
