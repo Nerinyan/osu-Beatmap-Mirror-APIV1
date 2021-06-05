@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"time"
+
+	"github.com/nerina1241/osu-beatmap-mirror-api/Settings"
 )
 
 var (
@@ -24,7 +27,7 @@ func RunGetBeatmapDataASBancho() {
 				continue
 			}
 			apiCount = 0
-			go Setting.Save()
+			go Settings.Config.Save()
 		}
 	}()
 	go func() { //desc
@@ -32,9 +35,11 @@ func RunGetBeatmapDataASBancho() {
 			time.Sleep(time.Second * 30)
 			if err := getUpdatedMapDesc(); err != nil {
 				fmt.Println(err)
-				return
+				continue
 			}
-			fmt.Println("DESC", Setting.Osu.BeatmapUpdate.UpdatedDesc.Id)
+			if Settings.Config.Logger.UpdateSheduler {
+				fmt.Println("[U]", "DESC", Settings.Config.Osu.BeatmapUpdate.UpdatedDesc.Id)
+			}
 		}
 	}()
 	go func() { //asc
@@ -43,12 +48,15 @@ func RunGetBeatmapDataASBancho() {
 
 			if err := getUpdatedMapAsc(); err != nil {
 				fmt.Println(err)
-				return
+				continue
 			}
-			fmt.Println("ASC", Setting.Osu.BeatmapUpdate.UpdatedAsc.Id)
+			if Settings.Config.Logger.UpdateSheduler {
+				fmt.Println("[U]", "ASC", Settings.Config.Osu.BeatmapUpdate.UpdatedAsc.Id)
+			}
 		}
 	}()
 }
+
 func awaitApiCount() {
 	for {
 		if apiCount < 60 {
@@ -81,7 +89,7 @@ func getBeatmapSets(id string) string {
 		fmt.Println(err)
 		return ""
 	}
-	req.Header.Add("Authorization", Setting.Osu.Token.TokenType+" "+Setting.Osu.Token.AccessToken)
+	req.Header.Add("Authorization", Settings.Config.Osu.Token.TokenType+" "+Settings.Config.Osu.Token.AccessToken)
 
 	res, err := client.Do(req)
 	if err != nil {
@@ -115,7 +123,7 @@ func getUpdatedMapDesc() (err error) {
 		return
 	}
 
-	req.Header.Add("Authorization", Setting.Osu.Token.TokenType+" "+Setting.Osu.Token.AccessToken)
+	req.Header.Add("Authorization", Settings.Config.Osu.Token.TokenType+" "+Settings.Config.Osu.Token.AccessToken)
 
 	res, err := client.Do(req)
 	if err != nil {
@@ -142,8 +150,8 @@ func getUpdatedMapDesc() (err error) {
 		return
 	}
 	c := data["cursor"].(map[string]interface{})
-	Setting.Osu.BeatmapUpdate.UpdatedDesc.LastUpdate = c["last_update"].(string)
-	Setting.Osu.BeatmapUpdate.UpdatedDesc.Id = c["_id"].(string)
+	Settings.Config.Osu.BeatmapUpdate.UpdatedDesc.LastUpdate = c["last_update"].(string)
+	Settings.Config.Osu.BeatmapUpdate.UpdatedDesc.Id = c["_id"].(string)
 	return
 }
 func getUpdatedMapAsc() (err error) {
@@ -152,8 +160,8 @@ func getUpdatedMapAsc() (err error) {
 	//      https://osu.ppy.sh/beatmapsets/search?sort=updated_desc&s=any&cursor%5Blast_update%5D=1621954136000&cursor%5B_id%5D=1473132
 	//      https://osu.ppy.sh/beatmapsets/search?sort=updated_desc&s=any&cursor%5Blast_update%5D=1622554856000&cursor%5B_id%5D=1477878
 	url := ""
-	lu := &Setting.Osu.BeatmapUpdate.UpdatedAsc.LastUpdate
-	id := &Setting.Osu.BeatmapUpdate.UpdatedAsc.Id
+	lu := &Settings.Config.Osu.BeatmapUpdate.UpdatedAsc.LastUpdate
+	id := &Settings.Config.Osu.BeatmapUpdate.UpdatedAsc.Id
 	if *lu+*id != "" {
 		url = "https://osu.ppy.sh/api/v2/beatmapsets/search?nsfw=true&sort=updated_asc&s=any&cursor%5Blast_update%5D=" + *lu + "&cursor%5B_id%5D=" + *id
 	} else {
@@ -168,7 +176,7 @@ func getUpdatedMapAsc() (err error) {
 		return
 	}
 
-	req.Header.Add("Authorization", Setting.Osu.Token.TokenType+" "+Setting.Osu.Token.AccessToken)
+	req.Header.Add("Authorization", Settings.Config.Osu.Token.TokenType+" "+Settings.Config.Osu.Token.AccessToken)
 
 	res, err := client.Do(req)
 	if err != nil {
@@ -205,6 +213,14 @@ func getUpdatedMapAsc() (err error) {
 }
 
 func updateMap(SET map[string]interface{}) {
+	favCount := int(SET["favourite_count"].(float64))
+	if favCount > 70 {
+		sid := strconv.Itoa(int(SET["id"].(float64)))
+		dl, err := DownloadBeatmap(sid, false)
+		if err != nil && dl {
+			fmt.Println(sid, "favourite count is 70 over but download failed.")
+		}
+	}
 	//        beatmapset_id, title, title_unicode, artist, artist_unicode, creator, submitted_date,
 	//        ranked, ranked_date, last_updated, play_count, bpm, tags, genre_id,
 	//        genre_name, language_id, language_name, favourite_count
@@ -231,10 +247,19 @@ func updateMap(SET map[string]interface{}) {
 		}()
 	}
 }
-func updateSearchBeatmaps(data map[string]interface{}) (err error) {
 
+func updateSearchBeatmaps(data map[string]interface{}) (err error) {
 	for _, v := range data["beatmapsets"].([]interface{}) {
 		SET := v.(map[string]interface{})
+		favCount := int(SET["favourite_count"].(float64))
+		fmt.Println(favCount, "favourite count")
+		if favCount > 70 {
+			sid := strconv.Itoa(int(SET["id"].(float64)))
+			dl, err := DownloadBeatmap(sid, false)
+			if err != nil && dl {
+				fmt.Println(sid, "favourite count is 70 over but download failed.")
+			}
+		}
 		//        beatmapset_id, title, title_unicode, artist, artist_unicode, creator, submitted_date,
 		//        ranked, ranked_date, last_updated, play_count, bpm, tags, favourite_count
 		Upsert(UpsertMapsSet2, []interface{}{

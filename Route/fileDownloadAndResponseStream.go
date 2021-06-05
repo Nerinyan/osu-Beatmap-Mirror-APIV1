@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/nerina1241/osu-beatmap-mirror-api/Global"
+	"github.com/nerina1241/osu-beatmap-mirror-api/Settings"
 	"github.com/nerina1241/osu-beatmap-mirror-api/src"
 	"github.com/pkg/errors"
 )
@@ -22,7 +24,7 @@ type Rqdata struct {
 	Beatmapsetid int `json:"beatmapsetid"`
 }
 
-func DownloadBeatmapSet(c echo.Context) (err error) {
+func CheckServerType(c echo.Context) (err error) {
 	base64Setting := c.QueryParam("b")
 	StringJsonSetting, err := base64.StdEncoding.DecodeString(base64Setting)
 	if err != nil {
@@ -36,22 +38,42 @@ func DownloadBeatmapSet(c echo.Context) (err error) {
 		fmt.Println(err.Error())
 		return
 	}
-	fmt.Println(rqdata)
 
-	mid, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.NoContent(500)
-		return
+	switch rqdata.Server {
+	case 0:
+		return LoadBalanceDownload(c, rqdata.Beatmapsetid)
+	case 1:
+		return DownloadBeatmapSet(c, rqdata.Beatmapsetid)
+	case 2:
+		return RedirectThftgrServer(c, rqdata.Beatmapsetid)
+	default:
+		return DownloadBeatmapSet(c, rqdata.Beatmapsetid)
 	}
+}
 
-	serverFileName := src.Setting.TargetDir + "/" + c.Param("id")
+func LoadBalanceDownload(c echo.Context, mid int) (err error) {
+	switch Global.LoadBalance {
+	case 0:
+		Global.LoadBalance = Global.LoadBalance + 1
+		return DownloadBeatmapSet(c, mid)
+	case 1:
+		Global.LoadBalance = 0
+		return RedirectThftgrServer(c, mid)
+	default:
+		return c.String(505, "ErrorCode: 0-1")
+	}
+}
 
-	go src.ManualUpdateBeatmapSet(c.Param("id"))
+func DownloadBeatmapSet(c echo.Context, mid int) (err error) {
+	stringId := strconv.Itoa(mid)
+
+	serverFileName := Settings.Config.TargetDir + "/" + stringId
+
+	go src.ManualUpdateBeatmapSet(stringId)
 
 	rows, err := src.Maria.Query(src.GetDownloadBeatmapData, mid)
 	if err != nil {
-		c.NoContent(500)
-		return
+		return c.String(500, "ErrorCode: 1-1")
 	}
 	defer rows.Close()
 	if !rows.Next() {
@@ -64,8 +86,7 @@ func DownloadBeatmapSet(c echo.Context) (err error) {
 		LastUpdated string
 	}
 	if err = rows.Scan(&a.Id, &a.Artist, &a.Title, &a.LastUpdated); err != nil {
-		c.NoContent(500)
-		return
+		return c.String(500, "ErrorCode: 1-2")
 	}
 
 	fileName := a.Id + " " + a.Artist + " - " + a.Title + ".osz"
@@ -74,7 +95,7 @@ func DownloadBeatmapSet(c echo.Context) (err error) {
 		lu, err := time.Parse("2006-01-02T15:04:05", a.LastUpdated)
 		if err != nil {
 			fmt.Println(err)
-			return c.NoContent(500)
+			return c.String(500, "ErrorCode: 1-3-1")
 		}
 		if src.FileList[mid].Unix() >= lu.Unix() { // 맵이 최신인경우
 			return c.Attachment(serverFileName+".osz", fileName)
@@ -83,7 +104,7 @@ func DownloadBeatmapSet(c echo.Context) (err error) {
 		lu, err := time.Parse("2006-01-02 15:04:05", a.LastUpdated)
 		if err != nil {
 			fmt.Println(err)
-			return c.NoContent(500)
+			return c.String(500, "ErrorCode: 1-3-2")
 		}
 		if src.FileList[mid].Unix() >= lu.Unix() { // 맵이 최신인경우
 			return c.Attachment(serverFileName+".osz", fileName)
@@ -93,28 +114,41 @@ func DownloadBeatmapSet(c echo.Context) (err error) {
 	//==========================================
 	//=        비트맵 파일이 서버에 없는경우        =
 	//==========================================
-	fmt.Println(c.Param("id") + "file does not exist on the server, download start")
-	url := "https://osu.ppy.sh/api/v2/beatmapsets/" + c.Param("id") + "/download"
+	if Settings.Config.Logger.DownloadBeatmap {
+		fmt.Println("[d] " + stringId + "file does not exist on the server, download start")
+	}
+	url := "https://osu.ppy.sh/api/v2/beatmapsets/" + stringId + "/download"
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 
 	if err != nil {
-		c.NoContent(500)
-		return
+		return c.String(500, "ErrorCode: 2-1")
 	}
-	req.Header.Add("Authorization", src.Setting.Osu.Token.TokenType+" "+src.Setting.Osu.Token.AccessToken)
+	req.Header.Add("Authorization", Settings.Config.Osu.Token.TokenType+" "+Settings.Config.Osu.Token.AccessToken)
 
 	res, err := client.Do(req)
 
 	if err != nil {
-		c.NoContent(500)
-		return
+		return c.String(500, "ErrorCode: 2-2")
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
-		c.NoContent(404)
-		return
+		fmt.Println("Bancho returned", res.StatusCode, "so i will try to use another server")
+		url = "https://api.chimu.moe/v1/download/" + stringId
+		client = &http.Client{}
+		req, err = http.NewRequest("GET", url, nil)
+
+		if err != nil {
+			return c.String(500, "ErrorCode: 2-1-1")
+		}
+
+		res, err = client.Do(req)
+
+		if err != nil {
+			return c.String(500, "ErrorCode: 2-2-1")
+		}
+		defer res.Body.Close()
 	}
 	cLen, _ := strconv.Atoi(res.Header.Get("Content-Length"))
 
@@ -131,7 +165,7 @@ func DownloadBeatmapSet(c echo.Context) (err error) {
 		i += n
 		buf.Write(b[:n])
 		if _, err := c.Response().Write(b[:n]); err != nil {
-			c.NoContent(500)
+			c.String(500, "ErrorCode: 2-4")
 			return err
 		}
 		if err == io.EOF {
@@ -143,11 +177,16 @@ func DownloadBeatmapSet(c echo.Context) (err error) {
 	}
 	c.Response().Flush()
 	return saveLocal(&buf, serverFileName, mid)
+}
 
+func RedirectThftgrServer(c echo.Context, mid int) error {
+	bid := strconv.Itoa(mid)
+	URL := "https://xiiov.com/d/" + bid
+	return c.Redirect(http.StatusPermanentRedirect, string(URL))
 }
 
 func saveLocal(data *bytes.Buffer, path string, id int) error {
-	fmt.Println("beatmapSet Downloading at", src.Setting.TargetDir, path)
+	fmt.Println("beatmapSet Downloading at", Settings.Config.TargetDir, path)
 	file, err := os.Create(path + ".osz.down")
 	if err != nil {
 		return err

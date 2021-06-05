@@ -1,15 +1,22 @@
-package src
+package Settings
 
 import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 )
 
 type config struct {
 	Port      string `json:"port"`
 	TargetDir string `json:"targetDir"`
-	Sql       struct {
+	Logger    struct {
+		UpdateSheduler  bool `json:"updatesSheduler"`
+		DownloadBeatmap bool `json:"downloadBeatmap"`
+		UpdateBeatmap   bool `json:"updateBeatmap"`
+	} `json:"logger"`
+	Key string `json:"Key"`
+	Sql struct {
 		Id     string `json:"id"`
 		Passwd string `json:"passwd"`
 		Url    string `json:"url"`
@@ -37,21 +44,21 @@ type config struct {
 	} `json:"osu"`
 }
 
-var Setting config
+var Config config
 
 func LoadSetting() {
 	b, err := ioutil.ReadFile("./config.json")
 	if err != nil {
-		fmt.Println(err.Error())
-		Setting.Save()
-		panic(err)
+		fmt.Println("i can't find config. so i make a new for you")
+		Config.Save()
+		os.Exit(3)
 	}
-	err = json.Unmarshal(b, &Setting)
+	err = json.Unmarshal(b, &Config)
 	if err != nil {
-		fmt.Println(err.Error())
-		panic(err)
+		fmt.Println("idk, your config file has something wrong.")
+		fmt.Println("in details: ", err.Error())
+		os.Exit(3)
 	}
-
 }
 
 func (v *config) Save() {

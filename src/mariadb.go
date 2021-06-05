@@ -6,6 +6,7 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/nerina1241/osu-beatmap-mirror-api/Settings"
 )
 
 var Maria *sql.DB
@@ -26,7 +27,7 @@ func QueryOnly(sql string, parm ...interface{}) error {
 
 func ConnectMaria() {
 
-	db, err := sql.Open("mysql", Setting.Sql.Id+":"+Setting.Sql.Passwd+"@tcp("+Setting.Sql.Url+")/")
+	db, err := sql.Open("mysql", Settings.Config.Sql.Id+":"+Settings.Config.Sql.Passwd+"@tcp("+Settings.Config.Sql.Url+")/")
 	if Maria = db; db != nil {
 		Maria.SetMaxOpenConns(100)
 		fmt.Println("mariaDB connected")

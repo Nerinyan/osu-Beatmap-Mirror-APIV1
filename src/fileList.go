@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/nerina1241/osu-beatmap-mirror-api/Settings"
 )
 
 type FileIndex map[int]time.Time
@@ -22,7 +24,7 @@ func StartIndex() {
 func FileListUpdate() {
 	fmt.Println(time.Now().UTC(), "indexing START========")
 
-	files, err := ioutil.ReadDir(Setting.TargetDir)
+	files, err := ioutil.ReadDir(Settings.Config.TargetDir)
 	if err != nil {
 		panic(err)
 	}

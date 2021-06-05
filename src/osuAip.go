@@ -8,11 +8,13 @@ import (
 	"mime/multipart"
 	"net/http"
 	"time"
+
+	"github.com/nerina1241/osu-beatmap-mirror-api/Settings"
 )
 
 func LoadBancho(ch chan struct{}) {
 	b := false
-	checkUpdatable := Setting.Osu.Token.UpdatedAt + Setting.Osu.Token.ExpiresIn - time.Now().Unix()
+	checkUpdatable := Settings.Config.Osu.Token.UpdatedAt + Settings.Config.Osu.Token.ExpiresIn - time.Now().Unix()
 	if checkUpdatable > 3600 {
 		fmt.Println("bancho - token Alive")
 		ch <- struct{}{}
@@ -20,7 +22,6 @@ func LoadBancho(ch chan struct{}) {
 	}
 
 	for {
-
 		err := login()
 		if err != nil {
 			fmt.Println("fail Get bancho Token")
@@ -31,8 +32,8 @@ func LoadBancho(ch chan struct{}) {
 			ch <- struct{}{}
 		}
 		fmt.Println("successful Get bancho Token")
-		Setting.Osu.Token.UpdatedAt = time.Now().Unix()
-		Setting.Save()
+		Settings.Config.Osu.Token.UpdatedAt = time.Now().Unix()
+		Settings.Config.Save()
 		time.Sleep(time.Second * 60 * 60 * 20)
 	}
 
@@ -42,8 +43,8 @@ func login() error {
 	url := "https://osu.ppy.sh/oauth/token"
 	payload := &bytes.Buffer{}
 	writer := multipart.NewWriter(payload)
-	_ = writer.WriteField("username", Setting.Osu.Username)
-	_ = writer.WriteField("password", Setting.Osu.Passwd)
+	_ = writer.WriteField("username", Settings.Config.Osu.Username)
+	_ = writer.WriteField("password", Settings.Config.Osu.Passwd)
 	_ = writer.WriteField("grant_type", "password")
 	_ = writer.WriteField("client_id", "5")
 	_ = writer.WriteField("client_secret", "FGc9GAtyHzeQDshWP5Ah7dega8hJACAJpQtw6OXk")
@@ -76,5 +77,5 @@ func login() error {
 		fmt.Println(err)
 		return err
 	}
-	return json.Unmarshal(body, &Setting.Osu.Token)
+	return json.Unmarshal(body, &Settings.Config.Osu.Token)
 }
