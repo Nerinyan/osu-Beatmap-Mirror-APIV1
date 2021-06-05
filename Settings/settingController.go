@@ -11,12 +11,17 @@ type config struct {
 	Port      string `json:"port"`
 	TargetDir string `json:"targetDir"`
 	Logger    struct {
-		UpdateSheduler  bool `json:"updatesSheduler"`
-		DownloadBeatmap bool `json:"downloadBeatmap"`
-		UpdateBeatmap   bool `json:"updateBeatmap"`
+		UpdateSheduler     bool `json:"updatesSheduler"`
+		DownloadBeatmap    bool `json:"downloadBeatmap"`
+		UpdateBeatmap      bool `json:"updateBeatmap"`
+		ShowFavouriteCount struct {
+			ALL    bool `json:"all"`
+			Over70 bool `json:"over70"`
+		} `json:"showFavouriteCount"`
 	} `json:"logger"`
-	Key string `json:"Key"`
-	Sql struct {
+	AutoDownload70FavOver bool   `json:"autoDownload70FavOver"`
+	Key                   string `json:"Key"`
+	Sql                   struct {
 		Id     string `json:"id"`
 		Passwd string `json:"passwd"`
 		Url    string `json:"url"`

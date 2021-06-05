@@ -213,12 +213,20 @@ func getUpdatedMapAsc() (err error) {
 }
 
 func updateMap(SET map[string]interface{}) {
-	favCount := int(SET["favourite_count"].(float64))
-	if favCount > 70 {
+	if Settings.Config.AutoDownload70FavOver {
+		favCount := int(SET["favourite_count"].(float64))
 		sid := strconv.Itoa(int(SET["id"].(float64)))
-		dl, err := DownloadBeatmap(sid, false)
-		if err != nil && dl {
-			fmt.Println(sid, "favourite count is 70 over but download failed.")
+		if Settings.Config.Logger.ShowFavouriteCount.ALL {
+			fmt.Println(sid, favCount, "favourite count")
+		}
+		if favCount > 70 {
+			if Settings.Config.Logger.ShowFavouriteCount.Over70 {
+				fmt.Println(sid, favCount, "favourite count")
+			}
+			dl, err := DownloadBeatmap(sid, false)
+			if err != nil && dl {
+				fmt.Println(sid, "favourite count is 70 over but download failed.")
+			}
 		}
 	}
 	//        beatmapset_id, title, title_unicode, artist, artist_unicode, creator, submitted_date,
@@ -251,13 +259,20 @@ func updateMap(SET map[string]interface{}) {
 func updateSearchBeatmaps(data map[string]interface{}) (err error) {
 	for _, v := range data["beatmapsets"].([]interface{}) {
 		SET := v.(map[string]interface{})
-		favCount := int(SET["favourite_count"].(float64))
-		fmt.Println(favCount, "favourite count")
-		if favCount > 70 {
+		if Settings.Config.AutoDownload70FavOver {
+			favCount := int(SET["favourite_count"].(float64))
 			sid := strconv.Itoa(int(SET["id"].(float64)))
-			dl, err := DownloadBeatmap(sid, false)
-			if err != nil && dl {
-				fmt.Println(sid, "favourite count is 70 over but download failed.")
+			if Settings.Config.Logger.ShowFavouriteCount.ALL {
+				fmt.Println(sid, favCount, "favourite count")
+			}
+			if favCount > 70 {
+				if Settings.Config.Logger.ShowFavouriteCount.Over70 {
+					fmt.Println(sid, favCount, "favourite count")
+				}
+				dl, err := DownloadBeatmap(sid, false)
+				if err != nil && dl {
+					fmt.Println(sid, "favourite count is 70 over but download failed.")
+				}
 			}
 		}
 		//        beatmapset_id, title, title_unicode, artist, artist_unicode, creator, submitted_date,
