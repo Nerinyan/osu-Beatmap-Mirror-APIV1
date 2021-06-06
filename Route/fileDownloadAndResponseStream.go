@@ -111,6 +111,7 @@ func DownloadBeatmapSet(c echo.Context, mid int) (err error) {
 			return c.String(500, "ErrorCode: 1-4-1")
 		}
 		if src.FileList[mid].Unix() >= lu.Unix() { // 맵이 최신인경우
+			c.Response().Header().Set("Content-Type", "application/download")
 			return c.Attachment(serverFileName+".osz", fileName)
 		}
 	} else {
@@ -120,6 +121,7 @@ func DownloadBeatmapSet(c echo.Context, mid int) (err error) {
 			return c.String(500, "ErrorCode: 1-4-2")
 		}
 		if src.FileList[mid].Unix() >= lu.Unix() { // 맵이 최신인경우
+			c.Response().Header().Set("Content-Type", "application/download")
 			return c.Attachment(serverFileName+".osz", fileName)
 		}
 	}
@@ -165,7 +167,7 @@ func DownloadBeatmapSet(c echo.Context, mid int) (err error) {
 	}
 	cLen, _ := strconv.Atoi(res.Header.Get("Content-Length"))
 
-	c.Response().Header().Set("Content-Type", "application/zip")
+	c.Response().Header().Set("Content-Type", res.Header.Get("Content-Type"))
 	c.Response().Header().Set("Content-Length", res.Header.Get("Content-Length"))
 	c.Response().Header().Set("Content-Disposition", res.Header.Get("Content-Disposition"))
 
