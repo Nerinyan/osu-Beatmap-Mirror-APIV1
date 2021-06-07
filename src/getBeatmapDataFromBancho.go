@@ -7,16 +7,27 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/nerina1241/osu-beatmap-mirror-api/Settings"
 )
 
-var (
-	apiCount int
-	//nullCount int
-	//cookie    []http.Cookie
-)
+var api = struct {
+	count int
+	mutex sync.Mutex
+}{}
+
+func apicountAdd() {
+	api.mutex.Lock()
+	api.count++
+	api.mutex.Unlock()
+}
+func apiCountReset() {
+	api.mutex.Lock()
+	api.count = 0
+	api.mutex.Unlock()
+}
 
 func RunGetBeatmapDataASBancho() {
 	go func() {
@@ -26,7 +37,7 @@ func RunGetBeatmapDataASBancho() {
 			if Maria.Ping() != nil {
 				continue
 			}
-			apiCount = 0
+			apiCountReset()
 			go Settings.Config.Save()
 		}
 	}()
@@ -39,6 +50,18 @@ func RunGetBeatmapDataASBancho() {
 			}
 			if Settings.Config.Logger.UpdateSheduler {
 				fmt.Println("[U]", "DESC", Settings.Config.Osu.BeatmapUpdate.UpdatedDesc.Id)
+			}
+		}
+	}()
+	go func() { //Ranked
+		for {
+			time.Sleep(time.Second * 60)
+			if err := getUpdatedMapRanked(); err != nil {
+				fmt.Println(err)
+				continue
+			}
+			if Settings.Config.Logger.UpdateSheduler {
+				fmt.Println("[U]", "RANKED", Settings.Config.Osu.BeatmapUpdate.UpdatedDesc.Id)
 			}
 		}
 	}()
@@ -59,7 +82,7 @@ func RunGetBeatmapDataASBancho() {
 
 func awaitApiCount() {
 	for {
-		if apiCount < 60 {
+		if api.count < 60 {
 			break
 		}
 		time.Sleep(time.Millisecond * 500)
@@ -98,7 +121,7 @@ func getBeatmapSets(id string) string {
 	}
 	defer func() {
 		res.Body.Close()
-		apiCount++
+		apicountAdd()
 	}()
 
 	body, err := ioutil.ReadAll(res.Body)
@@ -132,7 +155,7 @@ func getUpdatedMapDesc() (err error) {
 	}
 	defer func() {
 		res.Body.Close()
-		apiCount++
+		apicountAdd()
 	}()
 
 	body, err := ioutil.ReadAll(res.Body)
@@ -152,6 +175,49 @@ func getUpdatedMapDesc() (err error) {
 	c := data["cursor"].(map[string]interface{})
 	Settings.Config.Osu.BeatmapUpdate.UpdatedDesc.LastUpdate = c["last_update"].(string)
 	Settings.Config.Osu.BeatmapUpdate.UpdatedDesc.Id = c["_id"].(string)
+	return
+}
+func getUpdatedMapRanked() (err error) {
+	//TODO 30sec
+
+	//https://osu.ppy.sh/beatmapsets/search?sort=updated_desc&s=any&cursor%5Blast_update%5D=1621954136000&cursor%5B_id%5D=1473132
+	url := "https://osu.ppy.sh/api/v2/beatmapsets/search?nsfw=true&s=ranked"
+
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	req.Header.Add("Authorization", Settings.Config.Osu.Token.TokenType+" "+Settings.Config.Osu.Token.AccessToken)
+
+	res, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer func() {
+		res.Body.Close()
+		apicountAdd()
+	}()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	var data map[string]interface{}
+	if err = json.Unmarshal(body, &data); err != nil {
+		return
+	}
+
+	if err = updateSearchBeatmaps(data); err != nil {
+		return
+	}
+
 	return
 }
 func getUpdatedMapAsc() (err error) {
@@ -185,7 +251,7 @@ func getUpdatedMapAsc() (err error) {
 	}
 	defer func() {
 		res.Body.Close()
-		apiCount++
+		apicountAdd()
 	}()
 
 	body, err := ioutil.ReadAll(res.Body)
