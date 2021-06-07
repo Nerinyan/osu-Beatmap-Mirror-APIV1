@@ -20,13 +20,17 @@ func LoadBancho(ch chan struct{}) {
 		ch <- struct{}{}
 		time.Sleep(time.Second * time.Duration(checkUpdatable-100))
 	}
+	fmt.Println("bancho - token Dead")
+	fmt.Println("bancho - start refresh bancho token")
 
 	for {
+		fmt.Println("bancho - login try")
 		err := login()
 		if err != nil {
 			fmt.Println("fail Get bancho Token")
 			panic(err)
 		}
+		fmt.Println("bancho - login success")
 		if !b {
 			b = true
 			ch <- struct{}{}
@@ -39,12 +43,49 @@ func LoadBancho(ch chan struct{}) {
 
 }
 
+// func login2() error {
+// 	c := &http.Client{Timeout: time.Second * 10}
+// 	URL := "https://osu.ppy.sh/oauth/token"
+
+// 	v := url.Values{}
+// 	// v.Set("username", Settings.Config.Osu.Username)
+// 	// v.Set("password", Settings.Config.Osu.Passwd)
+// 	v.Set("grant_type", "password")
+// 	v.Set("client_id", "5")
+// 	v.Set("client_secret", "FGc9GAtyHzeQDshWP5Ah7dega8hJACAJpQtw6OXk")
+// 	v.Set("scope", "*")
+
+// 	req, err := http.NewRequest("POST", URL, strings.NewReader(v.Encode()))
+// 	req.SetBasicAuth(Settings.Config.Osu.Username, Settings.Config.Osu.Passwd)
+// 	if err != nil {
+// 		fmt.Println(err)
+// 		return err
+// 	}
+// 	fmt.Println(req)
+
+// 	resp, err := c.Do(req)
+// 	if err != nil {
+// 		fmt.Println("에러", err)
+// 		return err
+// 	}
+// 	fmt.Println(resp)
+
+// 	body, err := ioutil.ReadAll(resp.Body)
+// 	if err != nil {
+// 		fmt.Println(err)
+// 		return err
+// 	}
+// 	fmt.Println(body)
+
+// 	return json.Unmarshal(body, &Settings.Config.Osu.Token)
+// }
+
 func login() error {
 	url := "https://osu.ppy.sh/oauth/token"
 	payload := &bytes.Buffer{}
 	writer := multipart.NewWriter(payload)
-	_ = writer.WriteField("username", Settings.Config.Osu.Username)
-	_ = writer.WriteField("password", Settings.Config.Osu.Passwd)
+	_ = writer.WriteField("username", string(Settings.Config.Osu.Username))
+	_ = writer.WriteField("password", string(Settings.Config.Osu.Passwd))
 	_ = writer.WriteField("grant_type", "password")
 	_ = writer.WriteField("client_id", "5")
 	_ = writer.WriteField("client_secret", "FGc9GAtyHzeQDshWP5Ah7dega8hJACAJpQtw6OXk")
@@ -67,7 +108,7 @@ func login() error {
 	res, err := client.Do(req)
 	if err != nil {
 
-		fmt.Println(err)
+		fmt.Println("err", err)
 		return err
 	}
 	defer res.Body.Close()

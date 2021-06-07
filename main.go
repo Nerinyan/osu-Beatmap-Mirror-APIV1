@@ -16,11 +16,10 @@ var LogIO = bytes.Buffer{}
 
 func init() {
 	ch := make(chan struct{})
-
 	Settings.LoadSetting()
 	go src.LoadBancho(ch)
 	src.ConnectMaria()
-
+	_ = <-ch
 }
 
 func main() {
