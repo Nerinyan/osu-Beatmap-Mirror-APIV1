@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -281,17 +282,22 @@ func getUpdatedMapAsc() (err error) {
 func updateMap(SET map[string]interface{}) {
 	if Settings.Config.AutoDownload70FavOver {
 		favCount := int(SET["favourite_count"].(float64))
+		ranked := int(SET["ranked"].(float64))
 		sid := strconv.Itoa(int(SET["id"].(float64)))
 		if Settings.Config.Logger.ShowFavouriteCount.ALL {
 			fmt.Println(sid, favCount, "favourite count")
 		}
-		if favCount > 70 {
+		if favCount > 70 && (ranked == 1 || ranked == 4) {
+			oszFileName := sid + ".osz"
 			if Settings.Config.Logger.ShowFavouriteCount.Over70 {
-				fmt.Println(sid, favCount, "favourite count")
+				fmt.Println("[U]", sid, favCount, "favourite count")
 			}
-			dl, err := DownloadBeatmap(sid, false)
-			if err != nil && dl {
-				fmt.Println(sid, "favourite count is 70 over but download failed.")
+			if _, err := os.Stat(oszFileName); os.IsNotExist(err) {
+				fmt.Println("[C]", sid, "file dose not exist, download start")
+				dl, err := DownloadBeatmap(sid, false)
+				if err != nil && dl {
+					fmt.Println(sid, "favourite count is 70 over but download failed.")
+				}
 			}
 		}
 	}
@@ -327,17 +333,22 @@ func updateSearchBeatmaps(data map[string]interface{}) (err error) {
 		SET := v.(map[string]interface{})
 		if Settings.Config.AutoDownload70FavOver {
 			favCount := int(SET["favourite_count"].(float64))
+			ranked := int(SET["ranked"].(float64))
 			sid := strconv.Itoa(int(SET["id"].(float64)))
 			if Settings.Config.Logger.ShowFavouriteCount.ALL {
 				fmt.Println(sid, favCount, "favourite count")
 			}
-			if favCount > 70 {
+			if favCount > 70 && (ranked == 1 || ranked == 4) {
+				oszFileName := sid + ".osz"
 				if Settings.Config.Logger.ShowFavouriteCount.Over70 {
-					fmt.Println(sid, favCount, "favourite count")
+					fmt.Println("[U]", sid, favCount, "favourite count")
 				}
-				dl, err := DownloadBeatmap(sid, false)
-				if err != nil && dl {
-					fmt.Println(sid, "favourite count is 70 over but download failed.")
+				if _, err := os.Stat(oszFileName); os.IsNotExist(err) {
+					fmt.Println("[C]", sid, "file dose not exist, download start")
+					dl, err := DownloadBeatmap(sid, false)
+					if err != nil && dl {
+						fmt.Println(sid, "favourite count is 70 over but download failed.")
+					}
 				}
 			}
 		}
