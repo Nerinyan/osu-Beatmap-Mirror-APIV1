@@ -31,6 +31,11 @@ func apiCountReset() {
 }
 
 func RunGetBeatmapDataASBancho() {
+	checkUpdatable := Settings.Config.Osu.Token.UpdatedAt + Settings.Config.Osu.Token.ExpiresIn - time.Now().Unix()
+	if checkUpdatable < 3600 {
+		time.Sleep(time.Second * 10)
+	}
+
 	go func() {
 		for {
 			time.Sleep(time.Minute)
@@ -137,6 +142,9 @@ func getUpdatedMapDesc() (err error) {
 	//TODO 30sec
 
 	//https://osu.ppy.sh/beatmapsets/search?sort=updated_desc&s=any&cursor%5Blast_update%5D=1621954136000&cursor%5B_id%5D=1473132
+	//TODO 30sec
+
+	//https://osu.ppy.sh/beatmapsets/search?sort=updated_desc&s=any&cursor%5Blast_update%5D=1621954136000&cursor%5B_id%5D=1473132
 	url := "https://osu.ppy.sh/api/v2/beatmapsets/search?nsfw=true&sort=updated_desc&s=any"
 
 	client := &http.Client{}
@@ -222,6 +230,9 @@ func getUpdatedMapRanked() (err error) {
 	return
 }
 func getUpdatedMapAsc() (err error) {
+	// ch := make(chan struct{})
+	// go LoadBancho(ch)
+	// _ = <-ch
 	//TODO
 
 	//      https://osu.ppy.sh/beatmapsets/search?sort=updated_desc&s=any&cursor%5Blast_update%5D=1621954136000&cursor%5B_id%5D=1473132
@@ -260,6 +271,7 @@ func getUpdatedMapAsc() (err error) {
 		fmt.Println(err)
 		return
 	}
+
 	var data map[string]interface{}
 	if err = json.Unmarshal(body, &data); err != nil {
 		return
