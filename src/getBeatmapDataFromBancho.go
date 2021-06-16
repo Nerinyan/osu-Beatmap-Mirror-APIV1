@@ -341,6 +341,9 @@ func updateMap(SET map[string]interface{}) {
 }
 
 func updateSearchBeatmaps(data map[string]interface{}) (err error) {
+	if _, ok := data["beatmapsets"].([]interface{}); !ok {
+		return errors.New("beatmapsets : nil")
+	}
 	for _, v := range data["beatmapsets"].([]interface{}) {
 		SET := v.(map[string]interface{})
 		if Settings.Config.AutoDownload70FavOver {

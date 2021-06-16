@@ -80,7 +80,7 @@ func LoadBancho(ch chan struct{}) {
 // 	return json.Unmarshal(body, &Settings.Config.Osu.Token)
 // }
 
-func login() error {
+func login() (err error) {
 	url := "https://osu.ppy.sh/oauth/token"
 	payload := &bytes.Buffer{}
 	writer := multipart.NewWriter(payload)
@@ -90,10 +90,9 @@ func login() error {
 	_ = writer.WriteField("client_id", "5")
 	_ = writer.WriteField("client_secret", "FGc9GAtyHzeQDshWP5Ah7dega8hJACAJpQtw6OXk")
 	_ = writer.WriteField("scope", "*")
-	err := writer.Close()
+	err = writer.Close()
 	if err != nil {
-		fmt.Println(err)
-		return err
+		return
 	}
 
 	client := &http.Client{}
@@ -101,7 +100,7 @@ func login() error {
 
 	if err != nil {
 		fmt.Println(err)
-		return err
+		return
 	}
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
@@ -109,14 +108,14 @@ func login() error {
 	if err != nil {
 
 		fmt.Println("err", err)
-		return err
+		return
 	}
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		fmt.Println(err)
-		return err
+		return
 	}
 	return json.Unmarshal(body, &Settings.Config.Osu.Token)
 }
