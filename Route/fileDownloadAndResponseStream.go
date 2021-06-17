@@ -73,7 +73,7 @@ func DownloadBeatmapSet(c echo.Context, mid int) (err error) {
 
 	serverFileName := Settings.Config.TargetDir + "/" + stringId
 
-	go src.ManualUpdateBeatmapSet(stringId)
+	go src.ManualUpdateBeatmapSet(mid)
 
 	rows, err := src.Maria.Query(src.GetDownloadBeatmapData, mid)
 	if err != nil {
@@ -81,25 +81,17 @@ func DownloadBeatmapSet(c echo.Context, mid int) (err error) {
 	}
 	defer rows.Close()
 
-	// if !rows.Next() {
-	// 	// fmt.Println(err.Error())
-	// 	return c.String(404, "please wait some second and try again or later")
-	// }
+	if !rows.Next() {
+		return c.String(404, "please wait some second and try again or beatmap does not exist. please check beatmapset id.")
+	}
 	var a struct {
 		Id          string
 		Artist      string
 		Title       string
 		LastUpdated string
 	}
-	for rows.Next() {
-		if err := rows.Scan(&a.Id, &a.Artist, &a.Title, &a.LastUpdated); err != nil {
-			fmt.Println(err.Error())
-			return c.String(500, "ErrorCode: 1-2")
-		}
-	}
-
-	if err := rows.Err(); err != nil {
-		return c.String(500, "ErrorCode: 1-3")
+	if err = rows.Scan(&a.Id, &a.Artist, &a.Title, &a.LastUpdated); err != nil {
+		return c.String(500, "ErrorCode: 1-2")
 	}
 
 	fileName := a.Id + " " + a.Artist + " - " + a.Title + ".osz"
@@ -108,7 +100,7 @@ func DownloadBeatmapSet(c echo.Context, mid int) (err error) {
 		lu, err := time.Parse("2006-01-02T15:04:05", a.LastUpdated)
 		if err != nil {
 			fmt.Println(err)
-			return c.String(500, "ErrorCode: 1-4-1")
+			return c.String(500, "ErrorCode: 1-3-1")
 		}
 		if src.FileList[mid].Unix() >= lu.Unix() { // 맵이 최신인경우
 			c.Response().Header().Set("Content-Type", "application/download")
@@ -118,7 +110,7 @@ func DownloadBeatmapSet(c echo.Context, mid int) (err error) {
 		lu, err := time.Parse("2006-01-02 15:04:05", a.LastUpdated)
 		if err != nil {
 			fmt.Println(err)
-			return c.String(500, "ErrorCode: 1-4-2")
+			return c.String(500, "ErrorCode: 1-3-2")
 		}
 		if src.FileList[mid].Unix() >= lu.Unix() { // 맵이 최신인경우
 			c.Response().Header().Set("Content-Type", "application/download")

@@ -17,6 +17,7 @@ var LogIO = bytes.Buffer{}
 func init() {
 	ch := make(chan struct{})
 	Settings.LoadSetting()
+	go src.StartIndex()
 	go src.LoadBancho(ch)
 	src.ConnectMaria()
 	_ = <-ch
@@ -27,20 +28,6 @@ func main() {
 	e := echo.New()
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{AllowMethods: []string{echo.GET}}))
-
-	e.GET("/u", func(c echo.Context) error {
-		k := c.QueryParam("k")
-		if k != Settings.Config.Key {
-			return c.String(404, "ErrorCode: -1")
-		}
-
-		i := c.QueryParam("s")
-		if src.ManualUpdateBeatmapSet(i) != nil {
-			return c.JSON(404, `{"success":false,"message":"bancho return null or server error"}`)
-		}
-		fmt.Print(" Alive - ", i)
-		return c.JSON(200, `{"success":true}`)
-	})
 
 	e.GET("/d", func(c echo.Context) error {
 		k := c.QueryParam("k")

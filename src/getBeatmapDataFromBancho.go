@@ -2,7 +2,6 @@ package src
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -12,6 +11,7 @@ import (
 	"time"
 
 	"github.com/nerina1241/osu-beatmap-mirror-api/Settings"
+	"github.com/nerina1241/osu-beatmap-mirror-api/osu"
 )
 
 var api = struct {
@@ -95,58 +95,8 @@ func awaitApiCount() {
 	}
 }
 
-func ManualUpdateBeatmapSet(id string) (err error) {
-	ms := getBeatmapSets(id)
-	if ms == "" || ms == "{\"error\":null}" {
-		return errors.New("")
-	}
-
-	var v map[string]interface{}
-	if err = json.Unmarshal([]byte(ms), &v); err != nil {
-		return
-	}
-	updateMap(v)
-	return
-}
-
-func getBeatmapSets(id string) string {
-	url := "https://osu.ppy.sh/api/v2/beatmapsets/" + id
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
-
-	if err != nil {
-		fmt.Println(err)
-		return ""
-	}
-	req.Header.Add("Authorization", Settings.Config.Osu.Token.TokenType+" "+Settings.Config.Osu.Token.AccessToken)
-
-	res, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return ""
-	}
-	defer func() {
-		res.Body.Close()
-		apicountAdd()
-	}()
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		fmt.Println(err)
-		return ""
-	}
-	return string(body)
-}
-
-func getUpdatedMapDesc() (err error) {
-	//TODO 30sec
-
-	//https://osu.ppy.sh/beatmapsets/search?sort=updated_desc&s=any&cursor%5Blast_update%5D=1621954136000&cursor%5B_id%5D=1473132
-	//TODO 30sec
-
-	//https://osu.ppy.sh/beatmapsets/search?sort=updated_desc&s=any&cursor%5Blast_update%5D=1621954136000&cursor%5B_id%5D=1473132
-	url := "https://osu.ppy.sh/api/v2/beatmapsets/search?nsfw=true&sort=updated_desc&s=any"
-
+func ManualUpdateBeatmapSet(id int) {
+	url := fmt.Sprintf("https://osu.ppy.sh/api/v2/beatmapsets/%d", id)
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 
@@ -154,7 +104,6 @@ func getUpdatedMapDesc() (err error) {
 		fmt.Println(err)
 		return
 	}
-
 	req.Header.Add("Authorization", Settings.Config.Osu.Token.TokenType+" "+Settings.Config.Osu.Token.AccessToken)
 
 	res, err := client.Do(req)
@@ -172,20 +121,19 @@ func getUpdatedMapDesc() (err error) {
 		fmt.Println(err)
 		return
 	}
-
-	var data map[string]interface{}
-	if err = json.Unmarshal(body, &data); err != nil {
+	ms := string(body)
+	if ms == "" || ms == "{\"error\":null}" || res.StatusCode != 200 {
 		return
 	}
 
-	if err = updateSearchBeatmaps(data); err != nil {
+	var v osu.BeatmapSets
+	if err := json.Unmarshal([]byte(ms), &v); err != nil {
+		fmt.Print(id, "error", err.Error())
 		return
 	}
-	c := data["cursor"].(map[string]interface{})
-	Settings.Config.Osu.BeatmapUpdate.UpdatedDesc.LastUpdate = c["last_update"].(string)
-	Settings.Config.Osu.BeatmapUpdate.UpdatedDesc.Id = c["_id"].(string)
-	return
+	updateMap(&v)
 }
+
 func getUpdatedMapRanked() (err error) {
 	//TODO 30sec
 
@@ -218,21 +166,65 @@ func getUpdatedMapRanked() (err error) {
 		return
 	}
 
-	var data map[string]interface{}
+	var data osu.BeatmapsetsSearch
 	if err = json.Unmarshal(body, &data); err != nil {
 		return
 	}
 
-	if err = updateSearchBeatmaps(data); err != nil {
+	if err = updateSearchBeatmaps(data.Beatmapsets); err != nil {
 		return
 	}
 
 	return
 }
+
+func getUpdatedMapDesc() (err error) {
+	//TODO 30sec
+
+	//https://osu.ppy.sh/beatmapsets/search?sort=updated_desc&s=any&cursor%5Blast_update%5D=1621954136000&cursor%5B_id%5D=1473132
+	url := "https://osu.ppy.sh/api/v2/beatmapsets/search?nsfw=true&sort=updated_desc&s=any"
+
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	req.Header.Add("Authorization", Settings.Config.Osu.Token.TokenType+" "+Settings.Config.Osu.Token.AccessToken)
+
+	res, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer func() {
+		res.Body.Close()
+		apicountAdd()
+	}()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	var data osu.BeatmapsetsSearch
+	if err = json.Unmarshal(body, &data); err != nil {
+		return
+	}
+
+	if err = updateSearchBeatmaps(data.Beatmapsets); err != nil {
+		return
+	}
+	Settings.Config.Osu.BeatmapUpdate.UpdatedDesc.LastUpdate = *data.Cursor.LastUpdate
+	Settings.Config.Osu.BeatmapUpdate.UpdatedDesc.Id = *data.Cursor.Id
+
+	return
+}
+
 func getUpdatedMapAsc() (err error) {
-	// ch := make(chan struct{})
-	// go LoadBancho(ch)
-	// _ = <-ch
 	//TODO
 
 	//      https://osu.ppy.sh/beatmapsets/search?sort=updated_desc&s=any&cursor%5Blast_update%5D=1621954136000&cursor%5B_id%5D=1473132
@@ -272,30 +264,30 @@ func getUpdatedMapAsc() (err error) {
 		return
 	}
 
-	var data map[string]interface{}
+	var data osu.BeatmapsetsSearch
 	if err = json.Unmarshal(body, &data); err != nil {
 		return
 	}
-	if len(data["beatmapsets"].([]interface{})) < 1 {
+	if data.Cursor == nil {
 		*lu = ""
 		*id = ""
 		return
 	}
 
-	if err = updateSearchBeatmaps(data); err != nil {
+	if err = updateSearchBeatmaps(data.Beatmapsets); err != nil {
 		return
 	}
-	c := data["cursor"].(map[string]interface{})
-	*lu = c["last_update"].(string)
-	*id = c["_id"].(string)
+	//fmt.Println(*lu, *id, *data.Cursor , data.Beatmapsets == nil)
+	*lu = *data.Cursor.LastUpdate
+	*id = *data.Cursor.Id
 	return
 }
 
-func updateMap(SET map[string]interface{}) {
+func updateMap(s *osu.BeatmapSets) {
 	if Settings.Config.AutoDownload70FavOver {
-		favCount := int(SET["favourite_count"].(float64))
-		ranked := int(SET["ranked"].(float64))
-		sid := strconv.Itoa(int(SET["id"].(float64)))
+		favCount := s.FavouriteCount
+		ranked := s.Ranked
+		sid := strconv.Itoa(s.Id)
 		if Settings.Config.Logger.ShowFavouriteCount.ALL {
 			fmt.Println(sid, favCount, "favourite count")
 		}
@@ -318,38 +310,34 @@ func updateMap(SET map[string]interface{}) {
 	//        genre_name, language_id, language_name, favourite_count
 
 	Upsert(UpsertMapsSet2, []interface{}{
-		SET["id"], SET["title"], SET["title_unicode"], SET["artist"], SET["artist_unicode"], SET["creator"], ToDateTime(SET["submitted_date"]),
-		SET["ranked"], ToDateTime(SET["ranked_date"]), ToDateTime(SET["last_updated"]), SET["play_count"], SET["bpm"], SET["tags"], SET["favourite_count"],
+		s.Id, s.Title, s.TitleUnicode, s.Artist, s.ArtistUnicode, s.Creator, s.SubmittedDate,
+		s.Ranked, s.RankedDate, s.LastUpdated, s.PlayCount, s.Bpm, s.Tags, s.FavouriteCount,
 	})
-	for _, jz := range SET["beatmaps"].([]interface{}) {
-		MAP := jz.(map[string]interface{})
+	ch := make(chan struct{}, len(*s.Beatmaps))
+	for _, m := range *s.Beatmaps {
+		m := m
 		go func() {
-			//		id, set_id, set_ranked, set_ranked_txt, ranked, ranked_txt, mode,
-			//		mode_txt, title, title_unicode, artist, artist_unicode, version, creator, creator_id, set_submitted_date, set_last_updated,
-			//		set_ranked_date, last_updated, favourite_count, set_playcount, difficulty_rating, set_bpm, bpm, ar, cs, hp,
-			//		od, max_combo, playcount, passcount, total_length, hit_length, count_circles, count_spinners, count_sliders, has_storyboard,
-			//		has_video, language_id, language_name, genre_id, genre_name, tags, beatmaps_count
 			Upsert(UpsertMaps2, []interface{}{
-				MAP["id"], MAP["beatmapset_id"], SET["ranked"], SET["status"], MAP["ranked"], MAP["status"], MAP["mode_int"],
-				MAP["mode"], SET["title"], SET["title_unicode"], SET["artist"], SET["artist_unicode"], MAP["version"], SET["creator"], SET["user_id"], ToDateTime(SET["submitted_date"]), ToDateTime(SET["last_updated"]),
-				ToDateTime(SET["ranked_date"]), ToDateTime(MAP["last_updated"]), SET["favourite_count"], SET["play_count"], MAP["difficulty_rating"], SET["bpm"], MAP["bpm"], MAP["ar"], MAP["cs"], MAP["drain"],
-				MAP["accuracy"], MAP["max_combo"], MAP["playcount"], MAP["passcount"], MAP["total_length"], MAP["hit_length"], MAP["count_circles"], MAP["count_spinners"], MAP["count_sliders"], SET["storyboard"],
-				SET["video"], SET["tags"], len(SET["beatmaps"].([]interface{})),
+				m.Id, m.BeatmapsetId, s.Ranked, s.Status, m.Ranked, m.Status, m.ModeInt,
+				m.Mode, s.Title, s.TitleUnicode, s.Artist, s.ArtistUnicode, m.Version, s.Creator, s.UserId, s.SubmittedDate, s.LastUpdated,
+				s.RankedDate, m.LastUpdated, s.FavouriteCount, s.PlayCount, m.DifficultyRating, s.Bpm, m.Bpm, m.Ar, m.Cs, m.Drain,
+				m.Accuracy, m.MaxCombo, m.Playcount, m.Passcount, m.TotalLength, m.HitLength, m.CountCircles, m.CountSpinners, m.CountSliders, s.Storyboard,
+				s.Video, s.Tags, len(*s.Beatmaps),
 			})
+			ch <- struct{}{}
 		}()
+	}
+	for i := 0; i < len(ch); i++ {
+		<-ch
 	}
 }
 
-func updateSearchBeatmaps(data map[string]interface{}) (err error) {
-	if _, ok := data["beatmapsets"].([]interface{}); !ok {
-		return errors.New("beatmapsets : nil")
-	}
-	for _, v := range data["beatmapsets"].([]interface{}) {
-		SET := v.(map[string]interface{})
+func updateSearchBeatmaps(data *[]osu.BeatmapSets) (err error) {
+	for _, s := range *data {
 		if Settings.Config.AutoDownload70FavOver {
-			favCount := int(SET["favourite_count"].(float64))
-			ranked := int(SET["ranked"].(float64))
-			sid := strconv.Itoa(int(SET["id"].(float64)))
+			favCount := int(s.FavouriteCount)
+			ranked := int(s.Ranked)
+			sid := strconv.Itoa(s.Id)
 			if Settings.Config.Logger.ShowFavouriteCount.ALL {
 				fmt.Println(sid, favCount, "favourite count")
 			}
@@ -369,26 +357,28 @@ func updateSearchBeatmaps(data map[string]interface{}) (err error) {
 		}
 		//        beatmapset_id, title, title_unicode, artist, artist_unicode, creator, submitted_date,
 		//        ranked, ranked_date, last_updated, play_count, bpm, tags, favourite_count
+
 		Upsert(UpsertMapsSet2, []interface{}{
-			SET["id"], SET["title"], SET["title_unicode"], SET["artist"], SET["artist_unicode"], SET["creator"], ToDateTime(SET["submitted_date"]),
-			SET["ranked"], ToDateTime(SET["ranked_date"]), ToDateTime(SET["last_updated"]), SET["play_count"], SET["bpm"], SET["tags"], SET["favourite_count"],
+			s.Id, s.Title, s.TitleUnicode, s.Artist, s.ArtistUnicode, s.Creator, s.SubmittedDate,
+			s.Ranked, s.RankedDate, s.LastUpdated, s.PlayCount, s.Bpm, s.Tags, s.FavouriteCount,
 		})
-		for _, jz := range SET["beatmaps"].([]interface{}) {
-			MAP := jz.(map[string]interface{})
+
+		ch := make(chan struct{}, len(*s.Beatmaps))
+		for _, m := range *s.Beatmaps {
+			m := m
 			go func() {
-				//		id, set_id, set_ranked, set_ranked_txt, ranked, ranked_txt, mode,
-				//		mode_txt, title, title_unicode, artist, artist_unicode, version, creator, creator_id, set_submitted_date, set_last_updated,
-				//		set_ranked_date, last_updated, favourite_count, set_playcount, difficulty_rating, set_bpm, bpm, ar, cs, hp,
-				//		od, max_combo, playcount, passcount, total_length, hit_length, count_circles, count_spinners, count_sliders, has_storyboard,
-				//		has_video, tags, beatmaps_count
 				Upsert(UpsertMaps2, []interface{}{
-					MAP["id"], MAP["beatmapset_id"], SET["ranked"], SET["status"], MAP["ranked"], MAP["status"], MAP["mode_int"],
-					MAP["mode"], SET["title"], SET["title_unicode"], SET["artist"], SET["artist_unicode"], MAP["version"], SET["creator"], SET["user_id"], ToDateTime(SET["submitted_date"]), ToDateTime(SET["last_updated"]),
-					ToDateTime(SET["ranked_date"]), ToDateTime(MAP["last_updated"]), SET["favourite_count"], SET["play_count"], MAP["difficulty_rating"], SET["bpm"], MAP["bpm"], MAP["ar"], MAP["cs"], MAP["drain"],
-					MAP["accuracy"], MAP["max_combo"], MAP["playcount"], MAP["passcount"], MAP["total_length"], MAP["hit_length"], MAP["count_circles"], MAP["count_spinners"], MAP["count_sliders"], SET["storyboard"],
-					SET["video"], SET["tags"], len(SET["beatmaps"].([]interface{})),
+					m.Id, m.BeatmapsetId, s.Ranked, s.Status, m.Ranked, m.Status, m.ModeInt,
+					m.Mode, s.Title, s.TitleUnicode, s.Artist, s.ArtistUnicode, m.Version, s.Creator, s.UserId, s.SubmittedDate, s.LastUpdated,
+					s.RankedDate, m.LastUpdated, s.FavouriteCount, s.PlayCount, m.DifficultyRating, s.Bpm, m.Bpm, m.Ar, m.Cs, m.Drain,
+					m.Accuracy, m.MaxCombo, m.Playcount, m.Passcount, m.TotalLength, m.HitLength, m.CountCircles, m.CountSpinners, m.CountSliders, s.Storyboard,
+					s.Video, s.Tags, len(*s.Beatmaps),
 				})
+				ch <- struct{}{}
 			}()
+		}
+		for i := 0; i < len(ch); i++ {
+			<-ch
 		}
 	}
 	return

@@ -38,7 +38,7 @@ func LoadBancho(ch chan struct{}) {
 		fmt.Println("successful Get bancho Token")
 		Settings.Config.Osu.Token.UpdatedAt = time.Now().Unix()
 		Settings.Config.Save()
-		time.Sleep(time.Second * 60 * 60 * 20)
+		time.Sleep(time.Second * 60 * 60 * 20) //20 hours
 	}
 
 }
