@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo/v4"
+	"github.com/nerina1241/osu-beatmap-mirror-api/ConsoleLogger"
 	"github.com/nerina1241/osu-beatmap-mirror-api/Global"
 	"github.com/nerina1241/osu-beatmap-mirror-api/Route"
 )
@@ -31,24 +32,29 @@ func CheckServerType(c echo.Context) (err error) {
 		fmt.Println(err.Error())
 		return
 	}
+	var servername string
 	switch rqdata.Server {
 	case 0:
-		fmt.Println("[R]", "Request Redirect to Loadbalance Downloader", rqdata.Beatmapsetid)
+		servername = "Loadbalance Downloader"
+		ConsoleLogger.LoadBConsolelog("LoadBalance", strconv.Itoa(rqdata.Beatmapsetid)+" | Request Redirect to "+servername)
 		return LoadBalanceDownload(c, rqdata.Beatmapsetid)
 	case 1:
-		fmt.Println("[R]", "Request Redirect to Main Server", rqdata.Beatmapsetid)
+		servername = "Main Server"
+		ConsoleLogger.LoadBConsolelog("LoadBalance", strconv.Itoa(rqdata.Beatmapsetid)+" | Request Redirect to "+servername)
 		return Route.DownloadBeatmapSet(c, rqdata.Beatmapsetid)
 	case 2:
-		fmt.Println("[R]", "Request Redirect to thftServer", rqdata.Beatmapsetid)
+		servername = "thftServer"
+		ConsoleLogger.LoadBConsolelog("LoadBalance", strconv.Itoa(rqdata.Beatmapsetid)+" | Request Redirect to "+servername)
 		return RedirectThftgrServer(c, rqdata.Beatmapsetid)
 	default:
-		fmt.Println("[R]", "Request Redirect to Main Server", rqdata.Beatmapsetid)
+		servername = "Main Server"
+		ConsoleLogger.LoadBConsolelog("LoadBalance", strconv.Itoa(rqdata.Beatmapsetid)+" | Request Redirect to "+servername)
 		return Route.DownloadBeatmapSet(c, rqdata.Beatmapsetid)
 	}
 }
 
 func LoadBalanceDownload(c echo.Context, mid int) (err error) {
-	fmt.Println("[R]", "loadbalancer Count:", Global.LoadBalance)
+	ConsoleLogger.LoadBConsolelog("LoadBalance", "Loadbalance Count "+strconv.Itoa(Global.LoadBalance))
 	switch Global.LoadBalance {
 	case 0:
 		Global.LoadBalance = Global.LoadBalance + 1

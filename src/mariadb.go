@@ -2,15 +2,14 @@ package src
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/nerina1241/osu-beatmap-mirror-api/ConsoleLogger"
 	"github.com/nerina1241/osu-beatmap-mirror-api/Settings"
 )
 
 var Maria *sql.DB
-var QueryAPILog = `INSERT INTO osu.api_log (time, request_id, remote_ip, host, method, uri, user_agent, status, error, latency, latency_human, bytes_in, bytes_out) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?);`
 
 func QueryOnly(sql string, parm ...interface{}) error {
 
@@ -30,7 +29,7 @@ func ConnectMaria() {
 	db, err := sql.Open("mysql", Settings.Config.Sql.Id+":"+Settings.Config.Sql.Passwd+"@tcp("+Settings.Config.Sql.Url+")/")
 	if Maria = db; db != nil {
 		Maria.SetMaxOpenConns(100)
-		fmt.Println("mariaDB connected")
+		ConsoleLogger.Consolelog("DBSM", "Succesfully connected DBSM Server.")
 	} else {
 		panic(err)
 	}
@@ -43,7 +42,7 @@ func Upsert(query string, data []interface{}) {
 		data...,
 	)
 	if err != nil {
-		fmt.Println(err)
+		ConsoleLogger.WarningConsolelog("Warning", err.Error())
 
 	}
 }

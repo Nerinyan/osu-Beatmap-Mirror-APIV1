@@ -11,13 +11,14 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/nerina1241/osu-beatmap-mirror-api/ConsoleLogger"
 	"github.com/nerina1241/osu-beatmap-mirror-api/Settings"
 	"github.com/nerina1241/osu-beatmap-mirror-api/src"
 	"github.com/pkg/errors"
 )
 
 func saveLocal(data *bytes.Buffer, path string, id int) (err error) {
-	fmt.Println("[D] beatmapSet Downloading at", Settings.Config.TargetDir, path)
+	ConsoleLogger.Consolelog("Download", strconv.Itoa(id)+" | Saving beatmapsets Successful at "+Settings.Config.TargetDir+path)
 	file, err := os.Create(path + ".osz.down")
 	if err != nil {
 		return
@@ -43,7 +44,7 @@ func saveLocal(data *bytes.Buffer, path string, id int) (err error) {
 	}
 
 	src.FileList[id] = time.Now()
-	fmt.Println("[D] beatmapSet Downloading Finished", Settings.Config.TargetDir, path)
+	ConsoleLogger.Consolelog("Download", strconv.Itoa(id)+" | Saving beatmapsets Successful at "+Settings.Config.TargetDir+path)
 	return
 }
 func DownloadBeatmapSet(c echo.Context, mid int) (err error) {
@@ -73,34 +74,35 @@ func DownloadBeatmapSet(c echo.Context, mid int) (err error) {
 	}
 
 	fileName := a.Id + " " + a.Artist + " - " + a.Title + ".osz"
+	ConsoleLogger.Consolelog("Check File", stringId+" | Checking if the file is latest")
 	chkformat := strings.Contains(a.LastUpdated, "T")
+	var lu time.Time
 	if chkformat {
-		lu, err := time.Parse("2006-01-02T15:04:05", a.LastUpdated)
+		lu, err = time.Parse("2006-01-02T15:04:05", a.LastUpdated)
 		if err != nil {
-			fmt.Println(err)
+			ConsoleLogger.WarningConsolelog("Warning", err.Error())
 			return c.String(500, "ErrorCode: 1-3-1")
 		}
-		if src.FileList[mid].Unix() >= lu.Unix() { // 맵이 최신인경우
-			c.Response().Header().Set("Content-Type", "application/download")
-			return c.Attachment(serverFileName+".osz", fileName)
-		}
 	} else {
-		lu, err := time.Parse("2006-01-02 15:04:05", a.LastUpdated)
+		lu, err = time.Parse("2006-01-02 15:04:05", a.LastUpdated)
 		if err != nil {
-			fmt.Println(err)
+			ConsoleLogger.WarningConsolelog("Warning", err.Error())
 			return c.String(500, "ErrorCode: 1-3-2")
 		}
-		if src.FileList[mid].Unix() >= lu.Unix() { // 맵이 최신인경우
-			c.Response().Header().Set("Content-Type", "application/download")
-			return c.Attachment(serverFileName+".osz", fileName)
-		}
 	}
+
+	if src.FileList[mid].Unix() >= lu.Unix() { // 맵이 최신인경우
+		c.Response().Header().Set("Content-Type", "application/download")
+		return c.Attachment(serverFileName+".osz", fileName)
+	}
+
+	ConsoleLogger.WarningConsolelog("Check File", stringId+" | File is not latest so redownload started")
 
 	//==========================================
 	//=        비트맵 파일이 서버에 없는경우        =
 	//==========================================
 	if Settings.Config.Logger.DownloadBeatmap {
-		fmt.Println("[d] " + stringId + " file does not exist on the server, download start")
+		ConsoleLogger.Consolelog("Download", stringId+" | Download beatmapsets at "+Settings.Config.TargetDir)
 	}
 	url := "https://osu.ppy.sh/api/v2/beatmapsets/" + stringId + "/download"
 	client := &http.Client{}
@@ -119,7 +121,7 @@ func DownloadBeatmapSet(c echo.Context, mid int) (err error) {
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
-		fmt.Println("Bancho returned", res.StatusCode, "so i will try to use another server")
+		ConsoleLogger.WarningConsolelog("Download", stringId+" | Bancho returned '"+strconv.Itoa(res.StatusCode)+"' so i will retry download with another server.")
 		url = "https://api.chimu.moe/v1/download/" + stringId
 		client = &http.Client{}
 		req, err = http.NewRequest("GET", url, nil)

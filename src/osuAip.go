@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/nerina1241/osu-beatmap-mirror-api/ConsoleLogger"
 	"github.com/nerina1241/osu-beatmap-mirror-api/Settings"
 )
 
@@ -16,69 +17,31 @@ func LoadBancho(ch chan struct{}) {
 	b := false
 	checkUpdatable := Settings.Config.Osu.Token.UpdatedAt + Settings.Config.Osu.Token.ExpiresIn - time.Now().Unix()
 	if checkUpdatable > 3600 {
-		fmt.Println("bancho - token Alive")
+		ConsoleLogger.Consolelog("Bancho", "Api Token Alived!")
 		ch <- struct{}{}
 		time.Sleep(time.Second * time.Duration(checkUpdatable-100))
 	}
-	fmt.Println("bancho - token Dead")
-	fmt.Println("bancho - start refresh bancho token")
-
+	ConsoleLogger.DangersConsolelog("Bancho", "Api Token Dead")
+	ConsoleLogger.WarningConsolelog("Bancho", "Refreshing Bancho Api Token...")
 	for {
-		fmt.Println("bancho - login try")
+		ConsoleLogger.GoodConsolelog("Bancho", "Api Token Generate - Login Tryed")
 		err := login()
 		if err != nil {
-			fmt.Println("fail Get bancho Token")
+			ConsoleLogger.DangersConsolelog("Bancho", "Api Token Generate - Failed To Login")
 			panic(err)
 		}
-		fmt.Println("bancho - login success")
+		ConsoleLogger.GoodConsolelog("Bancho", "Api Token Generate - Login Successful")
 		if !b {
 			b = true
 			ch <- struct{}{}
 		}
-		fmt.Println("successful Get bancho Token")
+		ConsoleLogger.Consolelog("Bancho", "Succesfully Generated Bancho Api Token")
 		Settings.Config.Osu.Token.UpdatedAt = time.Now().Unix()
 		Settings.Config.Save()
 		time.Sleep(time.Second * 60 * 60 * 20) //20 hours
 	}
 
 }
-
-// func login2() error {
-// 	c := &http.Client{Timeout: time.Second * 10}
-// 	URL := "https://osu.ppy.sh/oauth/token"
-
-// 	v := url.Values{}
-// 	// v.Set("username", Settings.Config.Osu.Username)
-// 	// v.Set("password", Settings.Config.Osu.Passwd)
-// 	v.Set("grant_type", "password")
-// 	v.Set("client_id", "5")
-// 	v.Set("client_secret", "FGc9GAtyHzeQDshWP5Ah7dega8hJACAJpQtw6OXk")
-// 	v.Set("scope", "*")
-
-// 	req, err := http.NewRequest("POST", URL, strings.NewReader(v.Encode()))
-// 	req.SetBasicAuth(Settings.Config.Osu.Username, Settings.Config.Osu.Passwd)
-// 	if err != nil {
-// 		fmt.Println(err)
-// 		return err
-// 	}
-// 	fmt.Println(req)
-
-// 	resp, err := c.Do(req)
-// 	if err != nil {
-// 		fmt.Println("에러", err)
-// 		return err
-// 	}
-// 	fmt.Println(resp)
-
-// 	body, err := ioutil.ReadAll(resp.Body)
-// 	if err != nil {
-// 		fmt.Println(err)
-// 		return err
-// 	}
-// 	fmt.Println(body)
-
-// 	return json.Unmarshal(body, &Settings.Config.Osu.Token)
-// }
 
 func login() (err error) {
 	url := "https://osu.ppy.sh/oauth/token"
@@ -99,7 +62,7 @@ func login() (err error) {
 	req, err := http.NewRequest("POST", url, payload)
 
 	if err != nil {
-		fmt.Println(err)
+		ConsoleLogger.WarningConsolelog("Warning", err.Error())
 		return
 	}
 
@@ -114,7 +77,7 @@ func login() (err error) {
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		fmt.Println(err)
+		ConsoleLogger.WarningConsolelog("Warning", err.Error())
 		return
 	}
 	return json.Unmarshal(body, &Settings.Config.Osu.Token)

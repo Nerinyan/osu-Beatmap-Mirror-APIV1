@@ -13,6 +13,7 @@ import (
 )
 
 var LogIO = bytes.Buffer{}
+var Logbuf = bytes.Buffer{}
 
 func init() {
 	ch := make(chan struct{})
@@ -21,13 +22,16 @@ func init() {
 	go src.LoadBancho(ch)
 	src.ConnectMaria()
 	_ = <-ch
+	src.RunGetBeatmapDataASBancho()
 }
 
 func main() {
-	src.RunGetBeatmapDataASBancho()
 	e := echo.New()
 	e.Pre(middleware.RemoveTrailingSlash())
-	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{AllowMethods: []string{echo.GET}}))
+	e.Use(
+		middleware.CORSWithConfig(middleware.CORSConfig{AllowMethods: []string{echo.GET}}),
+		middleware.LoggerWithConfig(middleware.LoggerConfig{Output: &LogIO}),
+	)
 
 	e.GET("/u", func(c echo.Context) error {
 		k := c.QueryParam("k")

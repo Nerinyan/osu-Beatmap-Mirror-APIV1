@@ -2,9 +2,10 @@ package Settings
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
+
+	"github.com/nerina1241/osu-beatmap-mirror-api/ConsoleLogger"
 )
 
 type config struct {
@@ -54,14 +55,13 @@ var Config config
 func LoadSetting() {
 	b, err := ioutil.ReadFile("./config.json")
 	if err != nil {
-		fmt.Println("i can't find config. so i make a new for you")
+		ConsoleLogger.WarningConsolelog("CONFIG", "i can't find config, so i make a new for you")
 		Config.Save()
 		os.Exit(3)
 	}
 	err = json.Unmarshal(b, &Config)
 	if err != nil {
-		fmt.Println("idk, your config file has something wrong.")
-		fmt.Println("in details: ", err.Error())
+		ConsoleLogger.WarningConsolelog("CONFIG", "idk, your config file has something wrong. details: "+err.Error())
 		os.Exit(3)
 	}
 }

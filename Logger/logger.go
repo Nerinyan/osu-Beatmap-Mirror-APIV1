@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"time"
 
+	"github.com/nerina1241/osu-beatmap-mirror-api/ConsoleLogger"
 	"github.com/nerina1241/osu-beatmap-mirror-api/src"
 )
 
@@ -19,18 +19,18 @@ func LoadLogger(b *bytes.Buffer) {
 		}
 		line, err := bufio.NewReader(b).ReadBytes(0x0A)
 		if err != nil {
-			fmt.Println(err)
+			ConsoleLogger.WarningConsolelog("Warning", err.Error())
 			continue
 		}
 		js := map[string]interface{}{}
 		if err = json.Unmarshal(line, &js); err != nil {
-			fmt.Println(err)
+			ConsoleLogger.WarningConsolelog("Warning", err.Error())
 			continue
 		}
 		//fmt.Println(string(line))
 		t, err := time.Parse(time.RFC3339Nano, js["time"].(string))
 		if err != nil {
-			fmt.Println(err)
+			ConsoleLogger.WarningConsolelog("Warning", err.Error())
 			continue
 		}
 
@@ -51,7 +51,7 @@ func LoadLogger(b *bytes.Buffer) {
 			js["bytes_out"],
 		)
 		if err != nil {
-			fmt.Println(err)
+			ConsoleLogger.WarningConsolelog("Warning", err.Error())
 			continue
 		}
 

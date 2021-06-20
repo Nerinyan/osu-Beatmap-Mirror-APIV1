@@ -1,12 +1,13 @@
 package src
 
 import (
-	"fmt"
 	"io/ioutil"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/nerina1241/osu-beatmap-mirror-api/ConsoleLogger"
+	"github.com/nerina1241/osu-beatmap-mirror-api/Global"
 	"github.com/nerina1241/osu-beatmap-mirror-api/Settings"
 )
 
@@ -22,7 +23,7 @@ func StartIndex() {
 }
 
 func FileListUpdate() {
-	fmt.Println(time.Now().UTC(), "indexing START========")
+	ConsoleLogger.Consolelog("Indexing", "File indexing has been started")
 
 	files, err := ioutil.ReadDir(Settings.Config.TargetDir)
 	if err != nil {
@@ -36,5 +37,7 @@ func FileListUpdate() {
 		}
 	}
 	FileList = tmp
-	fmt.Println(time.Now().UTC(), "indexing END", len(FileList))
+	Global.IndexCount = len(FileList)
+	sTotalIndex := strconv.Itoa(Global.IndexCount)
+	ConsoleLogger.Consolelog("Indexing", "File indexing done! "+sTotalIndex+" files are indexed.")
 }

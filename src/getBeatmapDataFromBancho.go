@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/nerina1241/osu-beatmap-mirror-api/ConsoleLogger"
 	"github.com/nerina1241/osu-beatmap-mirror-api/Settings"
 	"github.com/nerina1241/osu-beatmap-mirror-api/osu"
 )
@@ -58,11 +59,11 @@ func RunGetBeatmapDataASBancho() {
 		for {
 			time.Sleep(time.Second * 30)
 			if err := getUpdatedMapDesc(); err != nil {
-				fmt.Println(err)
+				ConsoleLogger.WarningConsolelog("Warning", err.Error())
 				continue
 			}
 			if Settings.Config.Logger.UpdateSheduler {
-				fmt.Println("[U]", "DESC", Settings.Config.Osu.BeatmapUpdate.UpdatedDesc.Id)
+				ConsoleLogger.UpdateLConsolelog("Update", "DESC "+Settings.Config.Osu.BeatmapUpdate.UpdatedDesc.Id)
 			}
 		}
 	}()
@@ -70,11 +71,11 @@ func RunGetBeatmapDataASBancho() {
 		for {
 			time.Sleep(time.Second * 60)
 			if err := getUpdatedMapRanked(); err != nil {
-				fmt.Println(err)
+				ConsoleLogger.WarningConsolelog("Warning", err.Error())
 				continue
 			}
 			if Settings.Config.Logger.UpdateSheduler {
-				fmt.Println("[U]", "RANKED", Settings.Config.Osu.BeatmapUpdate.UpdatedDesc.Id)
+				ConsoleLogger.UpdateLConsolelog("Update", "RANKED "+Settings.Config.Osu.BeatmapUpdate.UpdatedDesc.Id)
 			}
 		}
 	}()
@@ -83,11 +84,11 @@ func RunGetBeatmapDataASBancho() {
 			awaitApiCount()
 
 			if err := getUpdatedMapAsc(); err != nil {
-				fmt.Println(err)
+				ConsoleLogger.WarningConsolelog("Warning", err.Error())
 				continue
 			}
 			if Settings.Config.Logger.UpdateSheduler {
-				fmt.Println("[U]", "ASC", Settings.Config.Osu.BeatmapUpdate.UpdatedAsc.Id)
+				ConsoleLogger.UpdateLConsolelog("Update", "ASC "+Settings.Config.Osu.BeatmapUpdate.UpdatedAsc.Id)
 			}
 		}
 	}()
@@ -99,14 +100,14 @@ func ManualUpdateBeatmapSet(id int) (err error) {
 	req, err := http.NewRequest("GET", url, nil)
 
 	if err != nil {
-		fmt.Println(err)
+		ConsoleLogger.WarningConsolelog("Warning", err.Error())
 		return
 	}
 	req.Header.Add("Authorization", Settings.Config.Osu.Token.TokenType+" "+Settings.Config.Osu.Token.AccessToken)
 
 	res, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
+		ConsoleLogger.WarningConsolelog("Warning", err.Error())
 		return
 	}
 	defer func() {
@@ -116,7 +117,7 @@ func ManualUpdateBeatmapSet(id int) (err error) {
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		fmt.Println(err)
+		ConsoleLogger.WarningConsolelog("Warning", err.Error())
 		return
 	}
 	ms := string(body)
@@ -143,7 +144,7 @@ func getUpdatedMapRanked() (err error) {
 	req, err := http.NewRequest("GET", url, nil)
 
 	if err != nil {
-		fmt.Println(err)
+		ConsoleLogger.WarningConsolelog("Warning", err.Error())
 		return
 	}
 
@@ -151,7 +152,7 @@ func getUpdatedMapRanked() (err error) {
 
 	res, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
+		ConsoleLogger.WarningConsolelog("Warning", err.Error())
 		return
 	}
 	defer func() {
@@ -161,7 +162,7 @@ func getUpdatedMapRanked() (err error) {
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		fmt.Println(err)
+		ConsoleLogger.WarningConsolelog("Warning", err.Error())
 		return
 	}
 
@@ -187,7 +188,7 @@ func getUpdatedMapDesc() (err error) {
 	req, err := http.NewRequest("GET", url, nil)
 
 	if err != nil {
-		fmt.Println(err)
+		ConsoleLogger.WarningConsolelog("Warning", err.Error())
 		return
 	}
 
@@ -195,7 +196,7 @@ func getUpdatedMapDesc() (err error) {
 
 	res, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
+		ConsoleLogger.WarningConsolelog("Warning", err.Error())
 		return
 	}
 	defer func() {
@@ -205,7 +206,7 @@ func getUpdatedMapDesc() (err error) {
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		fmt.Println(err)
+		ConsoleLogger.WarningConsolelog("Warning", err.Error())
 		return
 	}
 
@@ -241,7 +242,7 @@ func getUpdatedMapAsc() (err error) {
 	req, err := http.NewRequest("GET", url, nil)
 
 	if err != nil {
-		fmt.Println(err)
+		ConsoleLogger.WarningConsolelog("Warning", err.Error())
 		return
 	}
 
@@ -249,7 +250,7 @@ func getUpdatedMapAsc() (err error) {
 
 	res, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
+		ConsoleLogger.WarningConsolelog("Warning", err.Error())
 		return
 	}
 	defer func() {
@@ -259,7 +260,7 @@ func getUpdatedMapAsc() (err error) {
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		fmt.Println(err)
+		ConsoleLogger.WarningConsolelog("Warning", err.Error())
 		return
 	}
 
