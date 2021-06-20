@@ -58,6 +58,7 @@ func ToDateTime(t interface{}) string {
 func InsertAPILog(s ...interface{}) (err error) {
 	rows, err := Maria.Query(QueryAPILog, s...)
 	if err != nil {
+		ConsoleLogger.WarningConsolelog("Warning", err.Error())
 		return
 	}
 	defer rows.Close()

@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/nerina1241/osu-beatmap-mirror-api/LoadBalancer"
+	"github.com/nerina1241/osu-beatmap-mirror-api/Logger"
 	"github.com/nerina1241/osu-beatmap-mirror-api/Settings"
 	"github.com/nerina1241/osu-beatmap-mirror-api/src"
 )
@@ -21,8 +22,9 @@ func init() {
 	go src.StartIndex()
 	go src.LoadBancho(ch)
 	src.ConnectMaria()
+	go Logger.LoadLogger(&LogIO)
 	_ = <-ch
-	src.RunGetBeatmapDataASBancho()
+	go src.RunGetBeatmapDataASBancho()
 }
 
 func main() {

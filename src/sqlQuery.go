@@ -154,4 +154,21 @@ CREATE TABLE `BeatmapMirror.beatmapset` (
   PRIMARY KEY (`beatmapset_id`),
   UNIQUE KEY `id_UNIQUE` (`beatmapset_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+CREATE TABLE `api_log` (
+  `time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `request_id` varchar(32) NOT NULL,
+  `remote_ip` varchar(21) DEFAULT NULL,
+  `host` varchar(128) DEFAULT NULL,
+  `method` varchar(10) DEFAULT NULL,
+  `uri` longtext DEFAULT NULL,
+  `user_agent` longtext DEFAULT NULL,
+  `status` int(10) unsigned DEFAULT NULL,
+  `error` longtext DEFAULT NULL,
+  `latency` bigint(20) unsigned DEFAULT NULL,
+  `latency_human` varchar(16) DEFAULT NULL,
+  `bytes_in` bigint(20) unsigned DEFAULT NULL,
+  `bytes_out` bigint(20) unsigned DEFAULT NULL,
+  PRIMARY KEY (`request_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 */
