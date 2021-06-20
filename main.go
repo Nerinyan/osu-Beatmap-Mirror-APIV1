@@ -7,7 +7,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/nerina1241/osu-beatmap-mirror-api/Route"
+	"github.com/nerina1241/osu-beatmap-mirror-api/LoadBalancer"
 	"github.com/nerina1241/osu-beatmap-mirror-api/Settings"
 	"github.com/nerina1241/osu-beatmap-mirror-api/src"
 )
@@ -28,6 +28,23 @@ func main() {
 	e := echo.New()
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{AllowMethods: []string{echo.GET}}))
+
+	e.GET("/u", func(c echo.Context) error {
+		k := c.QueryParam("k")
+		if k != Settings.Config.Key {
+			return c.String(404, "ErrorCode: -1")
+		}
+		i := c.QueryParam("s")
+		ii, error := strconv.Atoi(c.QueryParam("s"))
+		if error != nil {
+			return c.String(404, "ErrorCode: -2")
+		}
+		if src.ManualUpdateBeatmapSet(ii) != nil {
+			return c.JSON(404, `{"success":false,"message":"bancho return null or server error"}`)
+		}
+		fmt.Println(" Alive - ", i)
+		return c.JSON(200, `{"success":true}`)
+	})
 
 	e.GET("/d", func(c echo.Context) error {
 		k := c.QueryParam("k")
@@ -55,7 +72,7 @@ func main() {
 		return c.HTML(200, `{"success":true}`)
 	})
 
-	e.GET("/download", Route.CheckServerType)
+	e.GET("/download", LoadBalancer.CheckServerType)
 
 	fmt.Println("Ready API Server")
 

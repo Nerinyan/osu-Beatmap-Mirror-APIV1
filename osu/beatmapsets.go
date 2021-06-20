@@ -17,7 +17,7 @@ type BeatmapSets struct {
 	} `json:"covers"`
 	Creator        *string `json:"creator"`
 	FavouriteCount int     `json:"favourite_count"`
-	Hype           *struct {
+	Hype           struct {
 		Current  int `json:"current"`
 		Required int `json:"required"`
 	} `json:"hype"`
