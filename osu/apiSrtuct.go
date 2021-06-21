@@ -1,7 +1,7 @@
 package osu
 
 type BeatmapsetsSearch struct {
-	Beatmapsets *[]BeatmapSets `json:"beatmapsets"`
+	Beatmapsets *[]BeatmapSetsIN `json:"beatmapsets"`
 	Cursor      *struct {
 		LastUpdate *string `json:"last_update"`
 		Id         *string `json:"_id"`

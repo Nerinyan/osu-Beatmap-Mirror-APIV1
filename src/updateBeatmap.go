@@ -6,7 +6,7 @@ import (
 	"github.com/nerina1241/osu-beatmap-mirror-api/osu"
 )
 
-func upsertMap(m osu.Beatmap, ch chan struct{}) {
+func upsertMap(m osu.BeatmapIN, ch chan struct{}) {
 
 	Upsert(UpsertBeatmap, []interface{}{
 		m.Id, m.BeatmapsetId, m.Mode, m.ModeInt, m.Status, m.Ranked, m.TotalLength, m.MaxCombo, m.DifficultyRating, m.Version,
@@ -16,7 +16,7 @@ func upsertMap(m osu.Beatmap, ch chan struct{}) {
 	ch <- struct{}{}
 }
 
-func updateMapset(s *osu.BeatmapSets) {
+func updateMapset(s *osu.BeatmapSetsIN) {
 	//	beatmapset_id,artist,artist_unicode,creator,favourite_count,
 	//	hype_current,hype_required,nsfw,play_count,source,
 	//	status,title,title_unicode,user_id,video,
@@ -51,7 +51,7 @@ func updateMapset(s *osu.BeatmapSets) {
 	}
 }
 
-func updateSearchBeatmaps(data *[]osu.BeatmapSets) (err error) {
+func updateSearchBeatmaps(data *[]osu.BeatmapSetsIN) (err error) {
 	if *data == nil {
 		return
 	}

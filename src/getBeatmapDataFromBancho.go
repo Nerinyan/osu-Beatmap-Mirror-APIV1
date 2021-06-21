@@ -125,7 +125,7 @@ func ManualUpdateBeatmapSet(id int) (err error) {
 		return
 	}
 
-	var v osu.BeatmapSets
+	var v osu.BeatmapSetsIN
 	if err = json.Unmarshal([]byte(ms), &v); err != nil {
 		fmt.Print(id, "error", err.Error())
 		return

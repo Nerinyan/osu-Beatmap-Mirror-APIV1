@@ -9,6 +9,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/nerina1241/osu-beatmap-mirror-api/LoadBalancer"
 	"github.com/nerina1241/osu-beatmap-mirror-api/Logger"
+	"github.com/nerina1241/osu-beatmap-mirror-api/Route"
 	"github.com/nerina1241/osu-beatmap-mirror-api/Settings"
 	"github.com/nerina1241/osu-beatmap-mirror-api/src"
 )
@@ -31,7 +32,7 @@ func main() {
 	e := echo.New()
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.Use(
-		middleware.CORSWithConfig(middleware.CORSConfig{AllowMethods: []string{echo.GET}}),
+		middleware.CORSWithConfig(middleware.CORSConfig{AllowOrigins: []string{"*"}, AllowMethods: []string{echo.GET}}),
 		middleware.LoggerWithConfig(middleware.LoggerConfig{Output: &LogIO}),
 	)
 
@@ -79,6 +80,7 @@ func main() {
 	})
 
 	e.GET("/download", LoadBalancer.CheckServerType)
+	e.GET("/search", Route.Search)
 
 	fmt.Println("Ready API Server")
 

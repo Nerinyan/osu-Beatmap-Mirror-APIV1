@@ -2,7 +2,7 @@ package osu
 
 import "time"
 
-type BeatmapSets struct {
+type BeatmapSetsIN struct {
 	Artist        *string `json:"artist"`
 	ArtistUnicode *string `json:"artist_unicode"`
 	Covers        *struct {
@@ -46,13 +46,13 @@ type BeatmapSets struct {
 		Current  int `json:"current"`
 		Required int `json:"required"`
 	} `json:"nominations_summary"`
-	Ranked        int        `json:"ranked"`
-	RankedDate    *time.Time `json:"ranked_date"`
-	Storyboard    bool       `json:"storyboard"`
-	SubmittedDate *time.Time `json:"submitted_date"`
-	Tags          *string    `json:"tags"`
-	HasFavourited bool       `json:"has_favourited"`
-	Beatmaps      *[]Beatmap `json:"beatmaps"`
+	Ranked        int          `json:"ranked"`
+	RankedDate    *time.Time   `json:"ranked_date"`
+	Storyboard    bool         `json:"storyboard"`
+	SubmittedDate *time.Time   `json:"submitted_date"`
+	Tags          *string      `json:"tags"`
+	HasFavourited bool         `json:"has_favourited"`
+	Beatmaps      *[]BeatmapIN `json:"beatmaps"`
 
 	Description *struct {
 		Description *string `json:"description"`
@@ -65,8 +65,9 @@ type BeatmapSets struct {
 		Id   int     `json:"id"`
 		Name *string `json:"name"`
 	} `json:"language"`
-	Ratings *[]int `json:"ratings"`
-	User    *struct {
+	Ratings       *[]int `json:"ratings"`
+	RatingsString *[]int `json:"ratings_string"`
+	User          *struct {
 		AvatarUrl     *string      `json:"avatar_url"`
 		CountryCode   *string      `json:"country_code"`
 		DefaultGroup  *string      `json:"default_group"`
@@ -81,4 +82,60 @@ type BeatmapSets struct {
 		ProfileColour *interface{} `json:"profile_colour"`
 		Username      *string      `json:"username"`
 	} `json:"user"`
+}
+
+type BeatmapSetsOUT struct {
+	Artist         *string `json:"artist"`
+	ArtistUnicode  *string `json:"artist_unicode"`
+	Creator        *string `json:"creator"`
+	FavouriteCount *int    `json:"favourite_count"`
+	Hype           struct {
+		Current  *int `json:"current"`
+		Required *int `json:"required"`
+	} `json:"hype"`
+	Id           *int    `json:"id"`
+	Nsfw         *bool   `json:"nsfw"`
+	PlayCount    *int    `json:"play_count"`
+	PreviewUrl   *string `json:"preview_url"`
+	Source       *string `json:"source"`
+	Status       *string `json:"status"`
+	Title        *string `json:"title"`
+	TitleUnicode *string `json:"title_unicode"`
+	UserId       *int    `json:"user_id"`
+	Video        *bool   `json:"video"`
+	Availability struct {
+		DownloadDisabled *bool   `json:"download_disabled"`
+		MoreInformation  *string `json:"more_information"`
+	} `json:"availability"`
+	Bpm                *float64 `json:"bpm"`
+	CanBeHyped         *bool    `json:"can_be_hyped"`
+	DiscussionEnabled  *bool    `json:"discussion_enabled"`
+	DiscussionLocked   *bool    `json:"discussion_locked"`
+	IsScoreable        *bool    `json:"is_scoreable"`
+	LastUpdated        *string  `json:"last_updated"`
+	LegacyThreadUrl    *string  `json:"legacy_thread_url"`
+	NominationsSummary struct {
+		Current  *int `json:"current"`
+		Required *int `json:"required"`
+	} `json:"nominations_summary"`
+	Ranked        int          `json:"ranked"`
+	RankedDate    *string      `json:"ranked_date"`
+	Storyboard    *bool        `json:"storyboard"`
+	SubmittedDate *string      `json:"submitted_date"`
+	Tags          *string      `json:"tags"`
+	HasFavourited *bool        `json:"has_favourited"`
+	Beatmaps      []BeatmapOUT `json:"beatmaps"`
+
+	Description struct {
+		Description *string `json:"description"`
+	} `json:"description"`
+	Genre struct {
+		Id   *int    `json:"id"`
+		Name *string `json:"name"`
+	} `json:"genre"`
+	Language struct {
+		Id   *int    `json:"id"`
+		Name *string `json:"name"`
+	} `json:"language"`
+	RatingsString *string `json:"ratings_string"`
 }
