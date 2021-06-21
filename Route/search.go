@@ -1,6 +1,7 @@
 package Route
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -30,7 +31,7 @@ func parseSort(s string) (ss string) { //sort
 	case "updated_desc":
 		ss += "last_updated desc"
 	default:
-		ss += "last_updated desc"
+		ss += "ranked_date desc"
 	}
 
 	return
@@ -85,23 +86,33 @@ func parseStatus(s string) (ss string) {
 }
 
 func Search(c echo.Context) (err error) {
-	querys := `
-select * from (select * from BeatmapMirror.beatmapset where ranked in( %s ) ) A 
-inner join (select distinct beatmapset_id from osu.beatmap where ranked in( %s ) AND mode_int in ( %s ) ) B using (beatmapset_id)
-order by A.%s %s ;
-`
-	querym := `select * from BeatmapMirror.beatmap where beatmapset_id in( %s );`
-	q := fmt.Sprintf(querys,
-		parseStatus(c.QueryParam("s")), //ranked
-		parseStatus(c.QueryParam("s")), //ranked
-		parseMode(c.QueryParam("m")),   //osu,mania
-		parseSort(c.QueryParam("sort")),
-		parsePage(c.QueryParam("p")), //page
-		//c.QueryParam("q"),
-	)
-	rows, err := src.Maria.Query(q)
+	var q string
+	var rows *sql.Rows
+	if c.QueryParam("q") == "" {
+		q = fmt.Sprintf(src.QuerySearchBeatmapSet,
+			parseStatus(c.QueryParam("s")), //ranked
+			parseStatus(c.QueryParam("s")), //ranked
+			parseMode(c.QueryParam("m")),   //osu,mania
+			parseSort(c.QueryParam("sort")),
+			parsePage(c.QueryParam("p")), //page
+
+		)
+		rows, err = src.Maria.Query(q)
+	} else {
+		q = fmt.Sprintf(src.QuerySearchBeatmapSetWhitQueryText,
+			parseStatus(c.QueryParam("s")), //ranked
+			parseStatus(c.QueryParam("s")), //ranked
+			parseMode(c.QueryParam("m")),   //osu,mania
+			parseSort(c.QueryParam("sort")),
+			parsePage(c.QueryParam("p")), //page
+
+		)
+		rows, err = src.Maria.Query(q, c.QueryParam("q"))
+	}
+
 	if err != nil {
-		return err
+		c.NoContent(http.StatusInternalServerError)
+		return
 	}
 	defer rows.Close()
 	var sets []osu.BeatmapSetsOUT
@@ -117,7 +128,6 @@ order by A.%s %s ;
 			//discussion_enabled, discussion_locked, is_scoreable, last_updated, legacy_thread_url,
 			//nominations_summary_current, nominations_summary_required, ranked, ranked_date, storyboard,
 			//submitted_date, tags, has_favourited, description, genre_id, genre_name, language_id, language_name, ratings
-
 			&set.Id, &set.Artist, &set.ArtistUnicode, &set.Creator, &set.FavouriteCount, &set.Hype.Current,
 			&set.Hype.Required, &set.Nsfw, &set.PlayCount, &set.Source, &set.Status, &set.Title, &set.TitleUnicode, &set.UserId,
 			&set.Video, &set.Availability.DownloadDisabled, &set.Availability.MoreInformation, &set.Bpm, &set.CanBeHyped,
@@ -133,10 +143,16 @@ order by A.%s %s ;
 		mapids = append(mapids, *set.Id)
 		sets = append(sets, set)
 	}
+
+	if len(sets) < 1 {
+		c.NoContent(http.StatusNotFound)
+		return
+	}
 	st := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(mapids)), ", "), "[]")
-	rows, err = src.Maria.Query(fmt.Sprintf(querym, st))
+	rows, err = src.Maria.Query(fmt.Sprintf(src.QueryBeatmap, st))
 	if err != nil {
-		return err
+		c.NoContent(http.StatusInternalServerError)
+		return
 	}
 	defer rows.Close()
 	for rows.Next() {
@@ -158,5 +174,4 @@ order by A.%s %s ;
 	}
 
 	return c.JSON(http.StatusOK, sets)
-
 }

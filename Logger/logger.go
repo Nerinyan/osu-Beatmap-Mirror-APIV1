@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/nerina1241/osu-beatmap-mirror-api/ConsoleLogger"
@@ -19,18 +20,18 @@ func LoadLogger(b *bytes.Buffer) {
 		}
 		line, err := bufio.NewReader(b).ReadBytes(0x0A)
 		if err != nil {
-			ConsoleLogger.WarningConsolelog("Warning", err.Error())
+			ConsoleLogger.WarningConsolelog("Logger", err.Error())
 			continue
 		}
 		js := map[string]interface{}{}
 		if err = json.Unmarshal(line, &js); err != nil {
-			ConsoleLogger.WarningConsolelog("Warning", err.Error())
+			ConsoleLogger.WarningConsolelog("Logger", err.Error())
 			continue
 		}
 		//fmt.Println(string(line))
 		t, err := time.Parse(time.RFC3339Nano, js["time"].(string))
 		if err != nil {
-			ConsoleLogger.WarningConsolelog("Warning", err.Error())
+			ConsoleLogger.WarningConsolelog("Logger", err.Error())
 			continue
 		}
 
@@ -51,10 +52,12 @@ func LoadLogger(b *bytes.Buffer) {
 			js["bytes_out"],
 		)
 		if err != nil {
-			ConsoleLogger.WarningConsolelog("Warning", err.Error())
+			ConsoleLogger.WarningConsolelog("Logger", err.Error())
 			continue
 		}
-
+		ssssss := fmt.Sprintf("%v", js["status"])
+		consolelogtxt := "request id: " + js["id"].(string) + " " + js["remote_ip"].(string) + " " + js["uri"].(string)
+		ConsoleLogger.WarningConsolelog("Logger | "+js["method"].(string)+"("+ssssss+")", consolelogtxt)
 	}
 
 }

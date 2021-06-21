@@ -34,6 +34,7 @@ func main() {
 	e.Use(
 		middleware.CORSWithConfig(middleware.CORSConfig{AllowOrigins: []string{"*"}, AllowMethods: []string{echo.GET}}),
 		middleware.LoggerWithConfig(middleware.LoggerConfig{Output: &LogIO}),
+		middleware.RequestID(),
 	)
 
 	e.GET("/u", func(c echo.Context) error {

@@ -75,6 +75,20 @@ INSERT INTO BeatmapMirror.beatmapset(
 ;
 `
 
+const QueryBeatmap = `select * from BeatmapMirror.beatmap where beatmapset_id in( %s );`
+
+const QuerySearchBeatmapSet = `
+select * from (select * from BeatmapMirror.beatmapset where ranked in( %s ) ) A 
+inner join (select distinct beatmapset_id from BeatmapMirror.beatmap where ranked in( %s ) AND mode_int in ( %s ) ) B using (beatmapset_id)
+order by A.%s %s ;
+`
+const QuerySearchBeatmapSetWhitQueryText = `
+select A.* from (select * from BeatmapMirror.search_index where MATCH(text) AGAINST(?)) S
+inner join (select * from BeatmapMirror.beatmapset where ranked in( %s ) ) A using (beatmapset_id)
+inner join (select distinct beatmapset_id from BeatmapMirror.beatmap where ranked in( %s ) AND mode_int in ( %s ) ) B using (beatmapset_id) 
+order by A.%s %s ;
+`
+
 const GetDownloadBeatmapData = `SELECT beatmapset_id,artist,title,last_updated FROM BeatmapMirror.beatmapset WHERE beatmapset_id = ?`
 
 const QueryAPILog = `INSERT INTO BeatmapMirror.api_log (time, request_id, remote_ip, host, method, uri, user_agent, status, error, latency, latency_human, bytes_in, bytes_out) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?);`
@@ -171,4 +185,28 @@ CREATE TABLE `api_log` (
   `bytes_out` bigint(20) unsigned DEFAULT NULL,
   PRIMARY KEY (`request_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- 트리거================
+DELIMITER $$
+CREATE DEFINER=`root`@`%` TRIGGER `osu`.`beatmapset_BEFORE_INSERT` BEFORE INSERT ON `beatmapset` FOR EACH ROW
+BEGIN
+	INSERT INTO `osu`.`search_index`(`beatmapset_id`,`text`)
+    VALUES(
+		NEW.beatmapset_id,
+		concat_ws(' ',NEW.beatmapset_id,NEW.artist,NEW.creator,NEW.title)
+    )ON DUPLICATE KEY UPDATE text = concat_ws(' ',NEW.beatmapset_id,NEW.artist,NEW.creator,NEW.title);
+END$$
+DELIMITER ;
+-- 트리거================
+DELIMITER $$
+CREATE DEFINER=`root`@`%` TRIGGER `osu`.`beatmapset_BEFORE_UPDATE` BEFORE UPDATE ON `beatmapset` FOR EACH ROW
+BEGIN
+	INSERT INTO `osu`.`search_index`(`beatmapset_id`,`text`)
+    VALUES(
+		NEW.beatmapset_id,
+		concat_ws(' ',NEW.beatmapset_id,NEW.artist,NEW.creator,NEW.title)
+    )ON DUPLICATE KEY UPDATE text = concat_ws(' ',NEW.beatmapset_id,NEW.artist,NEW.creator,NEW.title);
+END$$
+DELIMITER ;
+-- 트리거================
 */

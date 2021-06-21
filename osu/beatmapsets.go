@@ -107,13 +107,13 @@ type BeatmapSetsOUT struct {
 		DownloadDisabled *bool   `json:"download_disabled"`
 		MoreInformation  *string `json:"more_information"`
 	} `json:"availability"`
-	Bpm                *float64 `json:"bpm"`
-	CanBeHyped         *bool    `json:"can_be_hyped"`
-	DiscussionEnabled  *bool    `json:"discussion_enabled"`
-	DiscussionLocked   *bool    `json:"discussion_locked"`
-	IsScoreable        *bool    `json:"is_scoreable"`
-	LastUpdated        *string  `json:"last_updated"`
-	LegacyThreadUrl    *string  `json:"legacy_thread_url"`
+	Bpm                *string `json:"bpm"`
+	CanBeHyped         *bool   `json:"can_be_hyped"`
+	DiscussionEnabled  *bool   `json:"discussion_enabled"`
+	DiscussionLocked   *bool   `json:"discussion_locked"`
+	IsScoreable        *bool   `json:"is_scoreable"`
+	LastUpdated        *string `json:"last_updated"`
+	LegacyThreadUrl    *string `json:"legacy_thread_url"`
 	NominationsSummary struct {
 		Current  *int `json:"current"`
 		Required *int `json:"required"`

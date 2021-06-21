@@ -26,6 +26,7 @@ type config struct {
 		Id     string `json:"id"`
 		Passwd string `json:"passwd"`
 		Url    string `json:"url"`
+		Db     string `json:"Db"`
 	} `json:"sql"`
 	Osu struct {
 		Username string `json:"username"`
