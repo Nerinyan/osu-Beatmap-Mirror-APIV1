@@ -32,7 +32,8 @@ func main() {
 	e := echo.New()
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.Use(
-		middleware.CORSWithConfig(middleware.CORSConfig{AllowOrigins: []string{"*"}, AllowMethods: []string{echo.GET}}),
+		// middleware.CORSWithConfig(middleware.CORSConfig{AllowOrigins: []string{"*"}, AllowMethods: []string{echo.GET}}),
+		// middleware.CORS(),
 		middleware.LoggerWithConfig(middleware.LoggerConfig{Output: &LogIO}),
 		middleware.RequestID(),
 	)

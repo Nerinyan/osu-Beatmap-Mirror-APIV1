@@ -40,9 +40,9 @@ func parseSort(s string) (ss string) { //sort
 func parsePage(s string) (ss string) {
 	atoi, err := strconv.Atoi(s)
 	if err != nil || atoi <= 0 {
-		return " limit 50 "
+		return " limit 48 "
 	}
-	return fmt.Sprintf("limit %d,50", atoi*50)
+	return fmt.Sprintf("limit %d,48", atoi*48)
 }
 
 func parseMode(s string) (ss string) {
@@ -76,6 +76,8 @@ func parseStatus(s string) (ss string) {
 		ss = "-1"
 	case "graveyard":
 		ss = "-2"
+	case "unranked":
+		ss = "0,-1,-2"
 	case "any":
 		ss = "4,3,2,1,0,-1,-2"
 	default:

@@ -75,7 +75,7 @@ INSERT INTO BeatmapMirror.beatmapset(
 ;
 `
 
-const QueryBeatmap = `select * from BeatmapMirror.beatmap where beatmapset_id in( %s );`
+const QueryBeatmap = `select * from BeatmapMirror.beatmap where beatmapset_id in( %s ) order by difficulty_rating asc;`
 
 const QuerySearchBeatmapSet = `
 select * from (select * from BeatmapMirror.beatmapset where ranked in( %s ) ) A 
