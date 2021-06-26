@@ -100,9 +100,9 @@ func parseNsfw(s string) (ss string) {
 	case "0":
 		ss = "0"
 	case "1":
-		ss = "1"
+		ss = "0, 1"
 	default:
-		ss = "0,1"
+		ss = "0"
 	}
 	return
 }
@@ -110,13 +110,13 @@ func parseNsfw(s string) (ss string) {
 func parseExtra(s string) (ss string) {
 	switch s {
 	case "storyboard":
-		ss = "AND storyboard = 1"
+		ss = "AND storyboard in (1)"
 	case "video":
-		ss = "AND video = 1"
+		ss = "AND video in (1)"
 	case "storyboard.video":
-		ss = "AND video = 1 AND storyboard = 1"
+		ss = "AND video in (1) AND storyboard in (1)"
 	default:
-		ss = "AND video = 0 AND storyboard = 0"
+		ss = "AND video in (0,1) AND storyboard in (0,1)"
 	}
 	return
 }
@@ -148,6 +148,7 @@ func Search(c echo.Context) (err error) {
 		rows, err = src.Maria.Query(q)
 	} else {
 		q = fmt.Sprintf(src.QuerySearchBeatmapSetWhitQueryText,
+			c.QueryParam("q"),
 			parseStatus(c.QueryParam("s")),        //ranked
 			parseNsfw(c.QueryParam("nsfw")),       //Nsfw
 			parseExtra(c.QueryParam("e")),         //has video, has storyboard
@@ -157,8 +158,8 @@ func Search(c echo.Context) (err error) {
 			parseSort(c.QueryParam("sort")),
 			parsePage(c.QueryParam("p")), //page
 		)
-		rows, err = src.Maria.Query(q, c.QueryParam("q"))
-		fmt.Println("%" + c.QueryParam("q") + "%")
+		fmt.Println(q)
+		rows, err = src.Maria.Query(q)
 	}
 
 	if err != nil {
