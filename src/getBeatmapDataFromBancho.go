@@ -2,6 +2,7 @@ package src
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -79,6 +80,18 @@ func RunGetBeatmapDataASBancho() {
 			}
 		}
 	}()
+	go func() { //Loved
+		for {
+			time.Sleep(time.Second * 60)
+			if err := getUpdatedMapLoved(); err != nil {
+				ConsoleLogger.WarningConsolelog("Warning", err.Error())
+				continue
+			}
+			if Settings.Config.Logger.UpdateSheduler {
+				ConsoleLogger.UpdateLConsolelog("Update", "LOVED "+Settings.Config.Osu.BeatmapUpdate.UpdatedDesc.Id)
+			}
+		}
+	}()
 	go func() { //Qualified
 		for {
 			time.Sleep(time.Second * 60)
@@ -108,166 +121,62 @@ func RunGetBeatmapDataASBancho() {
 
 func ManualUpdateBeatmapSet(id int) (err error) {
 	url := fmt.Sprintf("https://osu.ppy.sh/api/v2/beatmapsets/%d", id)
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
 
-	if err != nil {
-		ConsoleLogger.WarningConsolelog("Warning", err.Error())
-		return
-	}
-	req.Header.Add("Authorization", Settings.Config.Osu.Token.TokenType+" "+Settings.Config.Osu.Token.AccessToken)
-
-	res, err := client.Do(req)
-	if err != nil {
-		ConsoleLogger.WarningConsolelog("Warning", err.Error())
-		return
-	}
-	defer func() {
-		res.Body.Close()
-		apicountAdd()
-	}()
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		ConsoleLogger.WarningConsolelog("Warning", err.Error())
-		return
-	}
-	ms := string(body)
-	if ms == "" || ms == "{\"error\":null}" || res.StatusCode != 200 {
+	var data osu.BeatmapSetsIN
+	if err = stdGETBancho(url, &data); err != nil {
 		return
 	}
 
-	var v osu.BeatmapSetsIN
-	if err = json.Unmarshal([]byte(ms), &v); err != nil {
-		fmt.Print(id, "error", err.Error())
-		return
-	}
-	updateMapset(&v)
+	updateMapset(&data)
 	return
 }
 
 func getUpdatedMapRanked() (err error) {
-	//TODO 30sec
-
-	//https://osu.ppy.sh/beatmapsets/search?sort=updated_desc&s=any&cursor%5Blast_update%5D=1621954136000&cursor%5B_id%5D=1473132
 	url := "https://osu.ppy.sh/api/v2/beatmapsets/search?nsfw=true&s=ranked"
 
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
-
-	if err != nil {
-		ConsoleLogger.WarningConsolelog("Warning", err.Error())
-		return
-	}
-
-	req.Header.Add("Authorization", Settings.Config.Osu.Token.TokenType+" "+Settings.Config.Osu.Token.AccessToken)
-
-	res, err := client.Do(req)
-	if err != nil {
-		ConsoleLogger.WarningConsolelog("Warning", err.Error())
-		return
-	}
-	defer func() {
-		res.Body.Close()
-		apicountAdd()
-	}()
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		ConsoleLogger.WarningConsolelog("Warning", err.Error())
-		return
-	}
-
 	var data osu.BeatmapsetsSearch
-	if err = json.Unmarshal(body, &data); err != nil {
+	if err = stdGETBancho(url, &data); err != nil {
 		return
 	}
-
 	if err = updateSearchBeatmaps(data.Beatmapsets); err != nil {
 		return
 	}
 
+	return
+}
+
+func getUpdatedMapLoved() (err error) {
+	url := "https://osu.ppy.sh/api/v2/beatmapsets/search?nsfw=true&s=loved"
+
+	var data osu.BeatmapsetsSearch
+	if err = stdGETBancho(url, &data); err != nil {
+		return
+	}
+	if err = updateSearchBeatmaps(data.Beatmapsets); err != nil {
+		return
+	}
 	return
 }
 
 func getUpdatedMapQualified() (err error) {
-	//TODO 30sec
-
-	//https://osu.ppy.sh/beatmapsets/search?sort=updated_desc&s=any&cursor%5Blast_update%5D=1621954136000&cursor%5B_id%5D=1473132
 	url := "https://osu.ppy.sh/api/v2/beatmapsets/search?nsfw=true&s=qualified"
 
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
-
-	if err != nil {
-		ConsoleLogger.WarningConsolelog("Warning", err.Error())
-		return
-	}
-
-	req.Header.Add("Authorization", Settings.Config.Osu.Token.TokenType+" "+Settings.Config.Osu.Token.AccessToken)
-
-	res, err := client.Do(req)
-	if err != nil {
-		ConsoleLogger.WarningConsolelog("Warning", err.Error())
-		return
-	}
-	defer func() {
-		res.Body.Close()
-		apicountAdd()
-	}()
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		ConsoleLogger.WarningConsolelog("Warning", err.Error())
-		return
-	}
-
 	var data osu.BeatmapsetsSearch
-	if err = json.Unmarshal(body, &data); err != nil {
+	if err = stdGETBancho(url, &data); err != nil {
 		return
 	}
-
 	if err = updateSearchBeatmaps(data.Beatmapsets); err != nil {
 		return
 	}
-
 	return
 }
 
 func getUpdatedMapDesc() (err error) {
-	//TODO 30sec
-
-	//https://osu.ppy.sh/beatmapsets/search?sort=updated_desc&s=any&cursor%5Blast_update%5D=1621954136000&cursor%5B_id%5D=1473132
 	url := "https://osu.ppy.sh/api/v2/beatmapsets/search?nsfw=true&sort=updated_desc&s=any"
 
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
-
-	if err != nil {
-		ConsoleLogger.WarningConsolelog("Warning", err.Error())
-		return
-	}
-
-	req.Header.Add("Authorization", Settings.Config.Osu.Token.TokenType+" "+Settings.Config.Osu.Token.AccessToken)
-
-	res, err := client.Do(req)
-	if err != nil {
-		ConsoleLogger.WarningConsolelog("Warning", err.Error())
-		return
-	}
-	defer func() {
-		res.Body.Close()
-		apicountAdd()
-	}()
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		ConsoleLogger.WarningConsolelog("Warning", err.Error())
-		return
-	}
-
 	var data osu.BeatmapsetsSearch
-	if err = json.Unmarshal(body, &data); err != nil {
+
+	if err = stdGETBancho(url, &data); err != nil {
 		return
 	}
 
@@ -281,10 +190,6 @@ func getUpdatedMapDesc() (err error) {
 }
 
 func getUpdatedMapAsc() (err error) {
-	//TODO
-
-	//      https://osu.ppy.sh/beatmapsets/search?sort=updated_desc&s=any&cursor%5Blast_update%5D=1621954136000&cursor%5B_id%5D=1473132
-	//      https://osu.ppy.sh/beatmapsets/search?sort=updated_desc&s=any&cursor%5Blast_update%5D=1622554856000&cursor%5B_id%5D=1477878
 	url := ""
 	lu := &Settings.Config.Osu.BeatmapUpdate.UpdatedAsc.LastUpdate
 	id := &Settings.Config.Osu.BeatmapUpdate.UpdatedAsc.Id
@@ -294,34 +199,10 @@ func getUpdatedMapAsc() (err error) {
 		url = "https://osu.ppy.sh/api/v2/beatmapsets/search?nsfw=true&sort=updated_asc&s=any"
 	}
 
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
-
-	if err != nil {
-		ConsoleLogger.WarningConsolelog("Warning", err.Error())
-		return
-	}
-
-	req.Header.Add("Authorization", Settings.Config.Osu.Token.TokenType+" "+Settings.Config.Osu.Token.AccessToken)
-
-	res, err := client.Do(req)
-	if err != nil {
-		ConsoleLogger.WarningConsolelog("Warning", err.Error())
-		return
-	}
-	defer func() {
-		res.Body.Close()
-		apicountAdd()
-	}()
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		ConsoleLogger.WarningConsolelog("Warning", err.Error())
-		return
-	}
-
 	var data osu.BeatmapsetsSearch
-	if err = json.Unmarshal(body, &data); err != nil {
+
+	err = stdGETBancho(url, &data)
+	if err != nil {
 		return
 	}
 	if data.Cursor == nil {
@@ -329,12 +210,42 @@ func getUpdatedMapAsc() (err error) {
 		*id = ""
 		return
 	}
-
 	if err = updateSearchBeatmaps(data.Beatmapsets); err != nil {
 		return
 	}
-	//fmt.Println(*lu, *id, *data.Cursor , data.Beatmapsets == nil)
 	*lu = *data.Cursor.LastUpdate
 	*id = *data.Cursor.Id
 	return
+}
+
+func stdGETBancho(url string, str interface{}) (err error) {
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	req.Header.Add("Authorization", Settings.Config.Osu.Token.TokenType+" "+Settings.Config.Osu.Token.AccessToken)
+
+	res, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer func() {
+		res.Body.Close()
+		apicountAdd()
+	}()
+	if res.StatusCode != 200 {
+		return errors.New(res.Status)
+	}
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	return json.Unmarshal(body, &str)
+
 }

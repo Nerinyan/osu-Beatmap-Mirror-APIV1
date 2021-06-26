@@ -52,7 +52,7 @@ func updateMapset(s *osu.BeatmapSetsIN) {
 }
 
 func updateSearchBeatmaps(data *[]osu.BeatmapSetsIN) (err error) {
-	if *data == nil {
+	if data == nil {
 		return
 	}
 	for _, s := range *data {

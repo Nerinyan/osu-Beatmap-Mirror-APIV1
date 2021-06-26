@@ -89,7 +89,7 @@ inner join (select distinct beatmapset_id from BeatmapMirror.beatmap where ranke
 order by A.%s %s ;
 `
 
-const GetDownloadBeatmapData = `SELECT beatmapset_id,artist,title,last_updated FROM BeatmapMirror.beatmapset WHERE beatmapset_id = ?`
+const GetDownloadBeatmapData = `SELECT beatmapset_id,artist,title,last_updated, video FROM BeatmapMirror.beatmapset WHERE beatmapset_id = ?`
 
 const QueryAPILog = `INSERT INTO BeatmapMirror.api_log (time, request_id, remote_ip, host, method, uri, user_agent, status, error, latency, latency_human, bytes_in, bytes_out) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?);`
 
