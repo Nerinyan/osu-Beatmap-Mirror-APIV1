@@ -144,7 +144,6 @@ func Search(c echo.Context) (err error) {
 			parseMode(c.QueryParam("m")),          //osu,mania
 			parseSort(c.QueryParam("sort")),
 			parsePage(c.QueryParam("p")), //page
-
 		)
 		rows, err = src.Maria.Query(q)
 	} else {
@@ -157,9 +156,9 @@ func Search(c echo.Context) (err error) {
 			parseMode(c.QueryParam("m")),          //osu,mania
 			parseSort(c.QueryParam("sort")),
 			parsePage(c.QueryParam("p")), //page
-
 		)
 		rows, err = src.Maria.Query(q, c.QueryParam("q"))
+		fmt.Println("%" + c.QueryParam("q") + "%")
 	}
 
 	if err != nil {

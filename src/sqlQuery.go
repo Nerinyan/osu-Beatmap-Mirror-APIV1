@@ -83,7 +83,7 @@ inner join (select distinct beatmapset_id from BeatmapMirror.beatmap where ranke
 order by A.%s %s ;
 `
 const QuerySearchBeatmapSetWhitQueryText = `
-select A.* from (select * from BeatmapMirror.search_index where MATCH(text) AGAINST(?)) S
+select A.* from (select * from BeatmapMirror.search_index where MATCH(text) AGAINST('?')) S
 inner join (select * from BeatmapMirror.beatmapset where ranked in( %s ) AND nsfw in (%s) %s %s ) A using (beatmapset_id)
 inner join (select distinct beatmapset_id from BeatmapMirror.beatmap where ranked in( %s ) AND mode_int in ( %s ) ) B using (beatmapset_id) 
 order by A.%s %s ;
