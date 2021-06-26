@@ -30,6 +30,14 @@ func parseSort(s string) (ss string) { //sort
 		ss += "last_updated asc"
 	case "updated_desc":
 		ss += "last_updated desc"
+	case "title_desc":
+		ss += "title desc"
+	case "title_asc":
+		ss += "title asc"
+	case "artist_desc":
+		ss += "artist desc"
+	case "artist_asc":
+		ss += "artist asc"
 	default:
 		ss += "ranked_date desc"
 	}
@@ -87,14 +95,53 @@ func parseStatus(s string) (ss string) {
 	return
 }
 
+func parseNsfw(s string) (ss string) {
+	switch s {
+	case "0":
+		ss = "0"
+	case "1":
+		ss = "1"
+	default:
+		ss = "0,1"
+	}
+	return
+}
+
+func parseExtra(s string) (ss string) {
+	switch s {
+	case "storyboard":
+		ss = "AND storyboard = 1"
+	case "video":
+		ss = "AND video = 1"
+	case "storyboard.video":
+		ss = "AND video = 1 AND storyboard = 1"
+	default:
+		ss = "AND video = 0 AND storyboard = 0"
+	}
+	return
+}
+
+func parseCreator(s string) (ss string) {
+	switch s {
+	case "0":
+		ss = ""
+	default:
+		ss = "AND user_id = " + s
+	}
+	return
+}
+
 func Search(c echo.Context) (err error) {
 	var q string
 	var rows *sql.Rows
 	if c.QueryParam("q") == "" {
 		q = fmt.Sprintf(src.QuerySearchBeatmapSet,
-			parseStatus(c.QueryParam("s")), //ranked
-			parseStatus(c.QueryParam("s")), //ranked
-			parseMode(c.QueryParam("m")),   //osu,mania
+			parseStatus(c.QueryParam("s")),        //ranked
+			parseNsfw(c.QueryParam("nsfw")),       //Nsfw
+			parseExtra(c.QueryParam("e")),         //has video, has storyboard
+			parseCreator(c.QueryParam("creator")), //creator ID
+			parseStatus(c.QueryParam("s")),        //ranked
+			parseMode(c.QueryParam("m")),          //osu,mania
 			parseSort(c.QueryParam("sort")),
 			parsePage(c.QueryParam("p")), //page
 
@@ -102,9 +149,12 @@ func Search(c echo.Context) (err error) {
 		rows, err = src.Maria.Query(q)
 	} else {
 		q = fmt.Sprintf(src.QuerySearchBeatmapSetWhitQueryText,
-			parseStatus(c.QueryParam("s")), //ranked
-			parseStatus(c.QueryParam("s")), //ranked
-			parseMode(c.QueryParam("m")),   //osu,mania
+			parseStatus(c.QueryParam("s")),        //ranked
+			parseNsfw(c.QueryParam("nsfw")),       //Nsfw
+			parseExtra(c.QueryParam("e")),         //has video, has storyboard
+			parseCreator(c.QueryParam("creator")), //creator ID
+			parseStatus(c.QueryParam("s")),        //ranked
+			parseMode(c.QueryParam("m")),          //osu,mania
 			parseSort(c.QueryParam("sort")),
 			parsePage(c.QueryParam("p")), //page
 

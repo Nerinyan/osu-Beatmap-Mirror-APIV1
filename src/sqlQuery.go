@@ -75,16 +75,16 @@ INSERT INTO BeatmapMirror.beatmapset(
 ;
 `
 
-const QueryBeatmap = `select * from BeatmapMirror.beatmap where beatmapset_id in( %s ) order by difficulty_rating asc;`
+const QueryBeatmap = `select * from BeatmapMirror.beatmap where beatmapset_id in( %s ) order by mode_int, difficulty_rating asc;`
 
 const QuerySearchBeatmapSet = `
-select * from (select * from BeatmapMirror.beatmapset where ranked in( %s ) ) A 
+select * from (select * from BeatmapMirror.beatmapset where ranked in( %s ) AND nsfw in (%s) %s %s ) A 
 inner join (select distinct beatmapset_id from BeatmapMirror.beatmap where ranked in( %s ) AND mode_int in ( %s ) ) B using (beatmapset_id)
 order by A.%s %s ;
 `
 const QuerySearchBeatmapSetWhitQueryText = `
 select A.* from (select * from BeatmapMirror.search_index where MATCH(text) AGAINST(?)) S
-inner join (select * from BeatmapMirror.beatmapset where ranked in( %s ) ) A using (beatmapset_id)
+inner join (select * from BeatmapMirror.beatmapset where ranked in( %s ) AND nsfw in (%s) %s %s ) A using (beatmapset_id)
 inner join (select distinct beatmapset_id from BeatmapMirror.beatmap where ranked in( %s ) AND mode_int in ( %s ) ) B using (beatmapset_id) 
 order by A.%s %s ;
 `
