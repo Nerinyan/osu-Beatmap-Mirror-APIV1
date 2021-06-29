@@ -83,6 +83,7 @@ func main() {
 
 	e.GET("/download", LoadBalancer.CheckServerType)
 	e.GET("/search", Route.Search)
+	e.GET("/beatmapset/:sid", Route.ApiBeatmapset)
 
 	fmt.Println("Ready API Server")
 
