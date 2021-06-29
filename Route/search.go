@@ -122,11 +122,15 @@ func parseExtra(s string) (ss string) {
 }
 
 func parseCreator(s string) (ss string) {
-	switch s {
-	case "0":
+	if len(s) >= 1 {
+		switch s {
+		case "0":
+			ss = ""
+		default:
+			ss = "AND user_id = " + s
+		}
+	} else {
 		ss = ""
-	default:
-		ss = "AND user_id = " + s
 	}
 	return
 }
