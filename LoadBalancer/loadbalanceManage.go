@@ -32,23 +32,19 @@ func CheckServerType(c echo.Context) (err error) {
 		fmt.Println(err.Error())
 		return
 	}
-	var servername string
+	fmt.Println("server req", rqdata.Server, "bsid", rqdata.Beatmapsetid)
 	switch rqdata.Server {
 	case 0:
-		servername = "Loadbalance Downloader"
-		ConsoleLogger.LoadBConsolelog("LoadBalance", strconv.Itoa(rqdata.Beatmapsetid)+" | Request Redirect to "+servername)
+		ConsoleLogger.LoadBConsolelog("LoadBalance", strconv.Itoa(rqdata.Beatmapsetid)+" | Request Redirect to Loadbalance Downloader")
 		return LoadBalanceDownload(c, rqdata.Beatmapsetid)
 	case 1:
-		servername = "Main Server"
-		ConsoleLogger.LoadBConsolelog("LoadBalance", strconv.Itoa(rqdata.Beatmapsetid)+" | Request Redirect to "+servername)
+		ConsoleLogger.LoadBConsolelog("LoadBalance", strconv.Itoa(rqdata.Beatmapsetid)+" | Request Redirect to Main Server")
 		return Route.DownloadBeatmapSet(c, rqdata.Beatmapsetid)
 	case 2:
-		servername = "thftServer"
-		ConsoleLogger.LoadBConsolelog("LoadBalance", strconv.Itoa(rqdata.Beatmapsetid)+" | Request Redirect to "+servername)
+		ConsoleLogger.LoadBConsolelog("LoadBalance", strconv.Itoa(rqdata.Beatmapsetid)+" | Request Redirect to thftServer")
 		return RedirectThftgrServer(c, rqdata.Beatmapsetid)
 	default:
-		servername = "Main Server"
-		ConsoleLogger.LoadBConsolelog("LoadBalance", strconv.Itoa(rqdata.Beatmapsetid)+" | Request Redirect to "+servername)
+		ConsoleLogger.LoadBConsolelog("LoadBalance", strconv.Itoa(rqdata.Beatmapsetid)+" | Request Redirect to Main Server")
 		return Route.DownloadBeatmapSet(c, rqdata.Beatmapsetid)
 	}
 }

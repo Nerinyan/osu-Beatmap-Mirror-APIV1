@@ -17,7 +17,7 @@ func LoadBancho(ch chan struct{}) {
 	b := false
 	checkUpdatable := Settings.Config.Osu.Token.UpdatedAt + Settings.Config.Osu.Token.ExpiresIn - time.Now().Unix()
 	if checkUpdatable > 3600 {
-		ConsoleLogger.Consolelog("Bancho", "Api Token Alived!")
+		ConsoleLogger.GoodConsolelog("Bancho", "Api Token Alive")
 		ch <- struct{}{}
 		time.Sleep(time.Second * time.Duration(checkUpdatable-100))
 	}
@@ -25,12 +25,15 @@ func LoadBancho(ch chan struct{}) {
 	ConsoleLogger.WarningConsolelog("Bancho", "Refreshing Bancho Api Token...")
 	for {
 		ConsoleLogger.GoodConsolelog("Bancho", "Api Token Generate - Login Tryed")
-		err := login()
-		if err != nil {
+		if err := login(true); err != nil {
 			ConsoleLogger.DangersConsolelog("Bancho", "Api Token Generate - Failed To Login")
-			panic(err)
+			if er := login(false); er != nil {
+				panic("fail LOGIN bancho - warn")
+			}
+			ConsoleLogger.GoodConsolelog("Bancho", "Api Token Generate - Login Successful")
+		} else {
+			ConsoleLogger.Consolelog("Bancho", "Succesfully Generated Bancho Api Token")
 		}
-		ConsoleLogger.GoodConsolelog("Bancho", "Api Token Generate - Login Successful")
 		if !b {
 			b = true
 			ch <- struct{}{}
@@ -43,16 +46,23 @@ func LoadBancho(ch chan struct{}) {
 
 }
 
-func login() (err error) {
+func login(refresh bool) (err error) {
 	url := "https://osu.ppy.sh/oauth/token"
 	payload := &bytes.Buffer{}
 	writer := multipart.NewWriter(payload)
-	_ = writer.WriteField("username", string(Settings.Config.Osu.Username))
-	_ = writer.WriteField("password", string(Settings.Config.Osu.Passwd))
-	_ = writer.WriteField("grant_type", "password")
 	_ = writer.WriteField("client_id", "5")
 	_ = writer.WriteField("client_secret", "FGc9GAtyHzeQDshWP5Ah7dega8hJACAJpQtw6OXk")
 	_ = writer.WriteField("scope", "*")
+
+	if refresh {
+		_ = writer.WriteField("grant_type", "refresh_token")
+		_ = writer.WriteField("refresh_token", Settings.Config.Osu.Token.RefreshToken)
+	} else {
+		_ = writer.WriteField("username", Settings.Config.Osu.Username)
+		_ = writer.WriteField("password", Settings.Config.Osu.Passwd)
+		_ = writer.WriteField("grant_type", "password")
+	}
+
 	err = writer.Close()
 	if err != nil {
 		return
@@ -60,25 +70,25 @@ func login() (err error) {
 
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", url, payload)
-
 	if err != nil {
-		ConsoleLogger.WarningConsolelog("Warning", err.Error())
 		return
 	}
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
+	if refresh {
+		req.Header.Set("Authorization", fmt.Sprintf("%s %s", Settings.Config.Osu.Token.TokenType, Settings.Config.Osu.Token.AccessToken))
+	}
+
 	res, err := client.Do(req)
 	if err != nil {
-
-		fmt.Println("err", err)
 		return
 	}
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		ConsoleLogger.WarningConsolelog("Warning", err.Error())
 		return
 	}
+
 	return json.Unmarshal(body, &Settings.Config.Osu.Token)
 }

@@ -12,6 +12,12 @@ import (
 	"github.com/nerina1241/osu-beatmap-mirror-api/src"
 )
 
+func convertQuery(s string) (ss string) {
+	ss += "\"" + s + "\""
+	fmt.Println(ss)
+	return
+}
+
 func parseSort(s string) (ss string) { //sort
 
 	s = strings.ToLower(s)
@@ -152,7 +158,7 @@ func Search(c echo.Context) (err error) {
 		rows, err = src.Maria.Query(q)
 	} else {
 		q = fmt.Sprintf(src.QuerySearchBeatmapSetWhitQueryText,
-			c.QueryParam("q"),
+			convertQuery(c.QueryParam("q")),
 			parseStatus(c.QueryParam("s")),        //ranked
 			parseNsfw(c.QueryParam("nsfw")),       //Nsfw
 			parseExtra(c.QueryParam("e")),         //has video, has storyboard
@@ -162,7 +168,6 @@ func Search(c echo.Context) (err error) {
 			parseSort(c.QueryParam("sort")),
 			parsePage(c.QueryParam("p")), //page
 		)
-		fmt.Println(q)
 		rows, err = src.Maria.Query(q)
 	}
 

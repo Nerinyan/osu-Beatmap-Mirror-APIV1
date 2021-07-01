@@ -142,8 +142,6 @@ func DownloadBeatmapSet(c echo.Context, mid int) (err error) {
 		return
 	}
 
-	fmt.Println("beatmapSet Downloading at", serverFileName)
-
 	cLen, _ := strconv.Atoi(res.Header.Get("Content-Length"))
 	c.Response().Header().Set("Content-Type", "application/download")
 	c.Response().Header().Set("Content-Length", res.Header.Get("Content-Length"))
