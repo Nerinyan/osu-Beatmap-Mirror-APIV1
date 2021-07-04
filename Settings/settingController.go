@@ -47,6 +47,10 @@ type config struct {
 				LastUpdate string `json:"last_update"`
 				Id         string `json:"_id"`
 			} `json:"updated_desc"`
+			GraveyardAsc struct {
+				LastUpdate string `json:"last_update"`
+				Id         string `json:"_id"`
+			} `json:"graveyard_asc"`
 		} `json:"beatmapUpdate"`
 	} `json:"osu"`
 }

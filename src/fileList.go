@@ -2,6 +2,8 @@ package src
 
 import (
 	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -39,5 +41,21 @@ func FileListUpdate() {
 	FileList = tmp
 	Global.IndexCount = len(FileList)
 	sTotalIndex := strconv.Itoa(Global.IndexCount)
-	ConsoleLogger.Consolelog("Indexing", "File indexing done! "+sTotalIndex+" files are indexed.")
+	indexTotalSize, err := DirSize(Settings.Config.TargetDir)
+	Global.IndexSize = indexTotalSize / 1024 / 1024 / 1024
+	ConsoleLogger.Consolelog("Indexing", "File indexing done! "+sTotalIndex+" files("+strconv.FormatInt(Global.IndexSize, 10)+"GB) are indexed.")
+}
+
+func DirSize(path string) (int64, error) {
+	var size int64
+	err := filepath.Walk(path, func(_ string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			size += info.Size()
+		}
+		return err
+	})
+	return size, err
 }

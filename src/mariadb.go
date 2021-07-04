@@ -30,6 +30,12 @@ func ConnectMaria() {
 	if Maria = db; db != nil {
 		Maria.SetMaxOpenConns(100)
 		ConsoleLogger.Consolelog("DBSM", "Succesfully connected DBSM Server.")
+
+		if _, err = Maria.Exec("SET SQL_SAFE_UPDATES = 0;"); err != nil {
+			ConsoleLogger.DangersConsolelog("DBSM", "Set SQL_SAFE_UPDATES Failed.")
+			panic(err)
+		}
+		ConsoleLogger.GoodConsolelog("DBSM", "Set SQL_SAFE_UPDATES Successful.")
 	} else {
 		panic(err)
 	}

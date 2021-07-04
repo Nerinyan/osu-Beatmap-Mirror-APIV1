@@ -8,13 +8,13 @@ import (
 	"strings"
 
 	"github.com/labstack/echo/v4"
+	"github.com/nerina1241/osu-beatmap-mirror-api/ConsoleLogger"
 	"github.com/nerina1241/osu-beatmap-mirror-api/osu"
 	"github.com/nerina1241/osu-beatmap-mirror-api/src"
 )
 
 func convertQuery(s string) (ss string) {
 	ss += "\"" + s + "\""
-	fmt.Println(ss)
 	return
 }
 
@@ -144,34 +144,46 @@ func parseCreator(s string) (ss string) {
 func Search(c echo.Context) (err error) {
 	var q string
 	var rows *sql.Rows
+	var (
+		status    = parseStatus(c.QueryParam("s"))        //ranked
+		nsfw      = parseNsfw(c.QueryParam("nsfw"))       //Nsfw
+		extra     = parseExtra(c.QueryParam("e"))         //has video, has storyboard
+		creator   = parseCreator(c.QueryParam("creator")) //creator ID
+		mode      = parseMode(c.QueryParam("m"))          //osu,mania
+		sort      = parseSort(c.QueryParam("sort"))
+		page      = parsePage(c.QueryParam("p")) //page
+		queryText = convertQuery(c.QueryParam("q"))
+	)
+
 	if c.QueryParam("q") == "" {
-		q = fmt.Sprintf(src.QuerySearchBeatmapSet,
-			parseStatus(c.QueryParam("s")),        //ranked
-			parseNsfw(c.QueryParam("nsfw")),       //Nsfw
-			parseExtra(c.QueryParam("e")),         //has video, has storyboard
-			parseCreator(c.QueryParam("creator")), //creator ID
-			parseStatus(c.QueryParam("s")),        //ranked
-			parseMode(c.QueryParam("m")),          //osu,mania
-			parseSort(c.QueryParam("sort")),
-			parsePage(c.QueryParam("p")), //page
+		q = fmt.Sprintf(src.QuerySearchBeatmapSetV2,
+			status,
+			nsfw,
+			extra,   //has video, has storyboard
+			creator, //creator ID
+			status,
+			mode,
+			sort,
+			page,
 		)
 		rows, err = src.Maria.Query(q)
 	} else {
-		q = fmt.Sprintf(src.QuerySearchBeatmapSetWhitQueryText,
-			convertQuery(c.QueryParam("q")),
-			parseStatus(c.QueryParam("s")),        //ranked
-			parseNsfw(c.QueryParam("nsfw")),       //Nsfw
-			parseExtra(c.QueryParam("e")),         //has video, has storyboard
-			parseCreator(c.QueryParam("creator")), //creator ID
-			parseStatus(c.QueryParam("s")),        //ranked
-			parseMode(c.QueryParam("m")),          //osu,mania
-			parseSort(c.QueryParam("sort")),
-			parsePage(c.QueryParam("p")), //page
+		q = fmt.Sprintf(src.QuerySearchBeatmapSetWhitQueryTextV2,
+			status,  //ranked
+			nsfw,    //Nsfw
+			extra,   //has video, has storyboard
+			creator, //creator ID
+			status,  //creator ID,        //ranked
+			mode,    //osu,mania
+			queryText,
+			sort,
+			page, //page
 		)
 		rows, err = src.Maria.Query(q)
 	}
 
 	if err != nil {
+		ConsoleLogger.WarningConsolelog("Error", err.Error())
 		c.NoContent(http.StatusInternalServerError)
 		return
 	}

@@ -117,6 +117,18 @@ func RunGetBeatmapDataASBancho() {
 			}
 		}
 	}()
+	go func() { //Update Graveyard asc limit 50
+		for {
+			time.Sleep(time.Minute)
+			if err := getGraveyardMap(); err != nil {
+				ConsoleLogger.WarningConsolelog("Warning", err.Error())
+				continue
+			}
+			if Settings.Config.Logger.UpdateSheduler {
+				ConsoleLogger.UpdateLConsolelog("Update", "GRAVEYARD "+Settings.Config.Osu.BeatmapUpdate.UpdatedAsc.Id)
+			}
+		}
+	}()
 }
 
 func ManualUpdateBeatmapSet(id int) (err error) {
@@ -197,6 +209,36 @@ func getUpdatedMapAsc() (err error) {
 		url = "https://osu.ppy.sh/api/v2/beatmapsets/search?nsfw=true&sort=updated_asc&s=any&cursor%5Blast_update%5D=" + *lu + "&cursor%5B_id%5D=" + *id
 	} else {
 		url = "https://osu.ppy.sh/api/v2/beatmapsets/search?nsfw=true&sort=updated_asc&s=any"
+	}
+
+	var data osu.BeatmapsetsSearch
+
+	err = stdGETBancho(url, &data)
+	if err != nil {
+		return
+	}
+	if data.Cursor == nil {
+		*lu = ""
+		*id = ""
+		return
+	}
+	if err = updateSearchBeatmaps(data.Beatmapsets); err != nil {
+		return
+	}
+	*lu = *data.Cursor.LastUpdate
+	*id = *data.Cursor.Id
+	return
+}
+
+func getGraveyardMap() (err error) {
+
+	url := ""
+	lu := &Settings.Config.Osu.BeatmapUpdate.GraveyardAsc.LastUpdate
+	id := &Settings.Config.Osu.BeatmapUpdate.GraveyardAsc.Id
+	if *lu+*id != "" {
+		url = "https://osu.ppy.sh/api/v2/beatmapsets/search?nsfw=true&sort=updated_asc&s=graveyard&cursor%5Blast_update%5D=" + *lu + "&cursor%5B_id%5D=" + *id
+	} else {
+		url = "https://osu.ppy.sh/api/v2/beatmapsets/search?nsfw=true&sort=updated_asc&s=graveyard"
 	}
 
 	var data osu.BeatmapsetsSearch

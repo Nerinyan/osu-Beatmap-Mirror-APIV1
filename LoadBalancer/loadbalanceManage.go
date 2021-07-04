@@ -32,7 +32,7 @@ func CheckServerType(c echo.Context) (err error) {
 		fmt.Println(err.Error())
 		return
 	}
-	fmt.Println("server req", rqdata.Server, "bsid", rqdata.Beatmapsetid)
+	// fmt.Println("server req", rqdata.Server, "bsid", rqdata.Beatmapsetid)
 	switch rqdata.Server {
 	case 0:
 		ConsoleLogger.LoadBConsolelog("LoadBalance", strconv.Itoa(rqdata.Beatmapsetid)+" | Request Redirect to Loadbalance Downloader")

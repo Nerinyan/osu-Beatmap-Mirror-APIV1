@@ -82,11 +82,26 @@ select * from (select * from BeatmapMirror.beatmapset where ranked in( %s ) AND 
 inner join (select distinct beatmapset_id from BeatmapMirror.beatmap where ranked in( %s ) AND mode_int in ( %s ) ) B using (beatmapset_id)
 order by A.%s %s ;
 `
+const QuerySearchBeatmapSetV2 = `
+select * from BeatmapMirror.beatmapset 
+	where ranked in( %s ) AND nsfw in (%s) %s %s 
+	AND
+	beatmapset_id in (select distinct beatmapset_id from BeatmapMirror.beatmap where ranked in( %s ) AND mode_int in ( %s ) ) 
+order by %s %s ;
+`
+
 const QuerySearchBeatmapSetWhitQueryText = `
 select A.* from (select * from BeatmapMirror.search_index where MATCH(text) AGAINST('%s')) S
 inner join (select * from BeatmapMirror.beatmapset where ranked in( %s ) AND nsfw in (%s) %s %s ) A using (beatmapset_id)
 inner join (select distinct beatmapset_id from BeatmapMirror.beatmap where ranked in( %s ) AND mode_int in ( %s ) ) B using (beatmapset_id) 
 order by A.%s %s ;
+`
+const QuerySearchBeatmapSetWhitQueryTextV2 = `
+select * from BeatmapMirror.beatmapset 
+where  ranked in( %s ) AND nsfw in (%s) %s %s  
+AND beatmapset_id in (select distinct beatmapset_id from BeatmapMirror.beatmap where ranked in( %s ) AND mode_int in ( %s ) ) 
+AND beatmapset_id in (select beatmapset_id from BeatmapMirror.search_index where MATCH(text) AGAINST( %s ))
+order by %s %s ;
 `
 
 const QueryBeatmapsetOnly = `
