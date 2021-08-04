@@ -57,75 +57,86 @@ func RunGetBeatmapDataASBancho() {
 		}
 	}()
 	go func() { //desc
-		for {
-			time.Sleep(time.Second * 30)
-			if err := getUpdatedMapDesc(); err != nil {
-				ConsoleLogger.WarningConsolelog("Warning", err.Error())
-				continue
-			}
-			if Settings.Config.Logger.UpdateSheduler {
-				ConsoleLogger.UpdateLConsolelog("Update", "DESC "+Settings.Config.Osu.BeatmapUpdate.UpdatedDesc.Id)
+		if Settings.Config.Update.Desc {
+			for {
+				time.Sleep(time.Second * 30)
+				if err := getUpdatedMapDesc(); err != nil {
+					ConsoleLogger.WarningConsolelog("Warning", err.Error())
+					continue
+				}
+				if Settings.Config.Logger.UpdateSheduler {
+					ConsoleLogger.UpdateLConsolelog("Update", "DESC "+Settings.Config.Osu.BeatmapUpdate.UpdatedDesc.Id)
+				}
 			}
 		}
 	}()
 	go func() { //Ranked
-		for {
-			time.Sleep(time.Second * 60)
-			if err := getUpdatedMapRanked(); err != nil {
-				ConsoleLogger.WarningConsolelog("Warning", err.Error())
-				continue
-			}
-			if Settings.Config.Logger.UpdateSheduler {
-				ConsoleLogger.UpdateLConsolelog("Update", "RANKED "+Settings.Config.Osu.BeatmapUpdate.UpdatedDesc.Id)
+		if Settings.Config.Update.Ranked {
+			for {
+				time.Sleep(time.Second * 60)
+				if err := getUpdatedMapRanked(); err != nil {
+					ConsoleLogger.WarningConsolelog("Warning", err.Error())
+					continue
+				}
+				if Settings.Config.Logger.UpdateSheduler {
+					ConsoleLogger.UpdateLConsolelog("Update", "RANKED "+Settings.Config.Osu.BeatmapUpdate.UpdatedDesc.Id)
+				}
 			}
 		}
 	}()
 	go func() { //Loved
-		for {
-			time.Sleep(time.Second * 60)
-			if err := getUpdatedMapLoved(); err != nil {
-				ConsoleLogger.WarningConsolelog("Warning", err.Error())
-				continue
-			}
-			if Settings.Config.Logger.UpdateSheduler {
-				ConsoleLogger.UpdateLConsolelog("Update", "LOVED "+Settings.Config.Osu.BeatmapUpdate.UpdatedDesc.Id)
+		if Settings.Config.Update.Loved {
+			for {
+				time.Sleep(time.Second * 60)
+				if err := getUpdatedMapLoved(); err != nil {
+					ConsoleLogger.WarningConsolelog("Warning", err.Error())
+					continue
+				}
+				if Settings.Config.Logger.UpdateSheduler {
+					ConsoleLogger.UpdateLConsolelog("Update", "LOVED "+Settings.Config.Osu.BeatmapUpdate.UpdatedDesc.Id)
+				}
 			}
 		}
 	}()
 	go func() { //Qualified
-		for {
-			time.Sleep(time.Second * 60)
-			if err := getUpdatedMapQualified(); err != nil {
-				ConsoleLogger.WarningConsolelog("Warning", err.Error())
-				continue
-			}
-			if Settings.Config.Logger.UpdateSheduler {
-				ConsoleLogger.UpdateLConsolelog("Update", "QUALIFIED "+Settings.Config.Osu.BeatmapUpdate.UpdatedDesc.Id)
+		if Settings.Config.Update.Qualified {
+			for {
+				time.Sleep(time.Second * 60)
+				if err := getUpdatedMapQualified(); err != nil {
+					ConsoleLogger.WarningConsolelog("Warning", err.Error())
+					continue
+				}
+				if Settings.Config.Logger.UpdateSheduler {
+					ConsoleLogger.UpdateLConsolelog("Update", "QUALIFIED "+Settings.Config.Osu.BeatmapUpdate.UpdatedDesc.Id)
+				}
 			}
 		}
 	}()
 	go func() { //asc
-		for {
-			awaitApiCount()
-
-			if err := getUpdatedMapAsc(); err != nil {
-				ConsoleLogger.WarningConsolelog("Warning", err.Error())
-				continue
-			}
-			if Settings.Config.Logger.UpdateSheduler {
-				ConsoleLogger.UpdateLConsolelog("Update", "ASC "+Settings.Config.Osu.BeatmapUpdate.UpdatedAsc.Id)
+		if Settings.Config.Update.Asc {
+			for {
+				awaitApiCount()
+				if err := getUpdatedMapAsc(); err != nil {
+					ConsoleLogger.WarningConsolelog("Warning", err.Error())
+					continue
+				}
+				if Settings.Config.Logger.UpdateSheduler {
+					ConsoleLogger.UpdateLConsolelog("Update", "ASC "+Settings.Config.Osu.BeatmapUpdate.UpdatedAsc.Id)
+				}
 			}
 		}
 	}()
 	go func() { //Update Graveyard asc limit 50
-		for {
-			time.Sleep(time.Minute)
-			if err := getGraveyardMap(); err != nil {
-				ConsoleLogger.WarningConsolelog("Warning", err.Error())
-				continue
-			}
-			if Settings.Config.Logger.UpdateSheduler {
-				ConsoleLogger.UpdateLConsolelog("Update", "GRAVEYARD "+Settings.Config.Osu.BeatmapUpdate.UpdatedAsc.Id)
+		if Settings.Config.Update.Graveyard {
+			for {
+				time.Sleep(time.Minute)
+				if err := getGraveyardMap(); err != nil {
+					ConsoleLogger.WarningConsolelog("Warning", err.Error())
+					continue
+				}
+				if Settings.Config.Logger.UpdateSheduler {
+					ConsoleLogger.UpdateLConsolelog("Update", "GRAVEYARD "+Settings.Config.Osu.BeatmapUpdate.UpdatedAsc.Id)
+				}
 			}
 		}
 	}()

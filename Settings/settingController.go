@@ -20,6 +20,14 @@ type config struct {
 			Over70 bool `json:"over70"`
 		} `json:"showFavouriteCount"`
 	} `json:"logger"`
+	Update struct {
+		Asc       bool `json:"asc"`
+		Desc      bool `json:"desc"`
+		Ranked    bool `json:"ranked"`
+		Loved     bool `json:"loved"`
+		Qualified bool `json:"qualified"`
+		Graveyard bool `json:"Graveyard"`
+	}
 	AutoDownload70FavOver bool   `json:"autoDownload70FavOver"`
 	Key                   string `json:"Key"`
 	Sql                   struct {
