@@ -10,6 +10,7 @@ import (
 	"github.com/nerina1241/osu-beatmap-mirror-api/Logger"
 	"github.com/nerina1241/osu-beatmap-mirror-api/Route"
 	"github.com/nerina1241/osu-beatmap-mirror-api/Settings"
+	"github.com/nerina1241/osu-beatmap-mirror-api/middleWareFunc"
 	"github.com/nerina1241/osu-beatmap-mirror-api/src"
 )
 
@@ -44,6 +45,7 @@ func main() {
 	e.Use(
 		// middleware.CORSWithConfig(middleware.CORSConfig{AllowOrigins: []string{"*"}, AllowMethods: []string{echo.GET}}),
 		// middleware.CORS(),
+		middleware.RateLimiterWithConfig(middleWareFunc.RateLimiterConfig),
 		middleware.LoggerWithConfig(middleware.LoggerConfig{Output: &LogIO}),
 		middleware.RequestID(),
 	)
